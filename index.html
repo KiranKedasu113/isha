@@ -1170,9 +1170,26 @@ function saveProcessedOrderId(id){
   localStorage.setItem('isha_cafe_processed_ids', JSON.stringify([...set]));
 }
 
+function getDeletedOrderIds(){
+  try {
+    return new Set(JSON.parse(localStorage.getItem('isha_cafe_deleted_ids')) || []);
+  } catch(e){
+    return new Set();
+  }
+}
+
+function saveDeletedOrderId(id){
+  const set = getDeletedOrderIds();
+  set.add(id);
+  localStorage.setItem('isha_cafe_deleted_ids', JSON.stringify([...set]));
+}
+
 function processReceivedOrder(orderData, isInitialPoll = false){
   if(!orderData || !orderData.token || !orderData.id) return;
   
+  // Ignore orders explicitly deleted or cleared by cashier
+  if(getDeletedOrderIds().has(orderData.id)) return;
+
   const processedSet = getProcessedOrderIds();
   const alreadyProcessed = processedSet.has(orderData.id);
 
@@ -1572,6 +1589,7 @@ function loadTableOrderToPOS(orderId){
 }
 
 function deleteTableOrder(orderId){
+  saveDeletedOrderId(orderId);
   let orders = getTableOrdersFromStorage();
   orders = orders.filter(o => (''+o.id) !== (''+orderId));
   localStorage.setItem('isha_cafe_table_orders', JSON.stringify(orders));
@@ -1581,6 +1599,8 @@ function deleteTableOrder(orderId){
 
 function clearPrintedTableOrders(){
   let orders = getTableOrdersFromStorage();
+  const printed = orders.filter(o => o.status === 'Printed');
+  printed.forEach(o => saveDeletedOrderId(o.id));
   orders = orders.filter(o => o.status !== 'Printed');
   localStorage.setItem('isha_cafe_table_orders', JSON.stringify(orders));
   renderTableOrdersView();
@@ -1589,6 +1609,8 @@ function clearPrintedTableOrders(){
 
 function clearAllTableOrders(){
   if(confirm("Are you sure you want to clear all table orders?")){
+    let orders = getTableOrdersFromStorage();
+    orders.forEach(o => saveDeletedOrderId(o.id));
     localStorage.removeItem('isha_cafe_table_orders');
     renderTableOrdersView();
     showToast(`All table orders cleared!`);
