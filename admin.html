@@ -832,10 +832,30 @@ function getDishImage(dishName, catName) {
   const cleanName = dishName.trim();
   if (DISH_IMGS[cleanName]) return DISH_IMGS[cleanName];
   
+  const lower = cleanName.toLowerCase();
   const keys = Object.keys(DISH_IMGS);
-  const foundKey = keys.find(k => k.toLowerCase() === cleanName.toLowerCase());
+  const foundKey = keys.find(k => k.toLowerCase() === lower);
   if (foundKey) return DISH_IMGS[foundKey];
-  
+
+  // Smart item-name keyword matching fallback
+  if (lower.includes('schezwan') && (lower.includes('rice') || lower.includes('fried'))) return 'images/schezwan_fried_rice.jpg';
+  if (lower.includes('paneer') && (lower.includes('rice') || lower.includes('fried'))) return 'images/paneer_fried_rice.jpg';
+  if (lower.includes('wings') && (lower.includes('rice') || lower.includes('fried'))) return 'images/chicken_wings_fried_rice.jpg';
+  if (lower.includes('lollipop') && (lower.includes('rice') || lower.includes('fried'))) return 'https://images.unsplash.com/photo-1608039829572-78524f79c4c7?w=400&auto=format&fit=crop&q=80';
+  if (lower.includes('mushroom') && (lower.includes('rice') || lower.includes('fried'))) return 'https://images.unsplash.com/photo-1603105037880-880cd4edfb5d?w=400&auto=format&fit=crop&q=80';
+  if (lower.includes('egg') && (lower.includes('rice') || lower.includes('fried'))) return 'https://images.unsplash.com/photo-1512058564366-18510be2db19?w=400&auto=format&fit=crop&q=80';
+  if (lower.includes('chicken') && (lower.includes('rice') || lower.includes('fried'))) return 'https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=400&auto=format&fit=crop&q=80';
+  if (lower.includes('fried rice') || lower.includes('rice')) return 'images/fried_rice.jpg';
+  if (lower.includes('momo')) return 'images/momo.jpg';
+  if (lower.includes('samosa')) return 'images/samosa.jpg';
+  if (lower.includes('bun') || lower.includes('maska')) return 'images/bun_maska.jpg';
+  if (lower.includes('lassi')) return 'images/mango_lassi.jpg';
+  if (lower.includes('burger')) return 'images/burger.jpg';
+  if (lower.includes('pizza')) return 'images/pizza.jpg';
+  if (lower.includes('wings')) return 'images/wings.jpg';
+  if (lower.includes('fries') || lower.includes('french fries')) return 'images/fries.jpg';
+  if (lower.includes('tea') || lower.includes('chai')) return 'images/irani_tea.jpg';
+
   return DEFAULT_CAT_IMGS[catName] || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&auto=format&fit=crop&q=80';
 }
 
