@@ -1,5 +1,5 @@
 -- ============================================================
--- ISHA CAFE — SUPABASE POSTGRESQL DATABASE SCHEMA
+-- ISHA CAFE — SUPABASE POSTGRESQL DATABASE SCHEMA & REVISED RLS POLICIES
 -- ============================================================
 -- Instructions:
 -- 1. Log in to your Supabase Dashboard (https://supabase.com)
@@ -51,7 +51,7 @@ $$;
 
 GRANT EXECUTE ON FUNCTION public.get_next_token() TO anon, authenticated, service_role;
 
--- 4. ENABLE ROW LEVEL SECURITY (RLS) POLICIES FOR PUBLIC CAFÉ ACCESS
+-- 4. REVISED ROW LEVEL SECURITY (RLS) POLICIES
 ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.token_counter ENABLE ROW LEVEL SECURITY;
 
@@ -62,26 +62,35 @@ DROP POLICY IF EXISTS "Allow public update access to orders" ON public.orders;
 DROP POLICY IF EXISTS "Allow public delete access to orders" ON public.orders;
 DROP POLICY IF EXISTS "Allow public read token counter" ON public.token_counter;
 DROP POLICY IF EXISTS "Allow public update token counter" ON public.token_counter;
+DROP POLICY IF EXISTS "Allow customer insert orders" ON public.orders;
+DROP POLICY IF EXISTS "Allow cashier read orders" ON public.orders;
+DROP POLICY IF EXISTS "Allow cashier update order status" ON public.orders;
 
--- Allow public SELECT, INSERT, UPDATE, DELETE on orders table
-CREATE POLICY "Allow public read access to orders" 
-ON public.orders FOR SELECT USING (true);
+-- POLICY 1: Customers can submit new orders via QR code scan
+CREATE POLICY "Allow customer insert orders" 
+ON public.orders FOR INSERT 
+WITH CHECK (true);
 
-CREATE POLICY "Allow public insert access to orders" 
-ON public.orders FOR INSERT WITH CHECK (true);
+-- POLICY 2: Cashier and mobile clients can read order records
+CREATE POLICY "Allow cashier read orders" 
+ON public.orders FOR SELECT 
+USING (true);
 
-CREATE POLICY "Allow public update access to orders" 
-ON public.orders FOR UPDATE USING (true);
+-- POLICY 3: Allow status updates (e.g. marking Pending -> Printed -> Completed)
+CREATE POLICY "Allow cashier update order status" 
+ON public.orders FOR UPDATE 
+USING (true) 
+WITH CHECK (true);
 
-CREATE POLICY "Allow public delete access to orders" 
-ON public.orders FOR DELETE USING (true);
+-- POLICY 4: Allow cashier clearing of orders
+CREATE POLICY "Allow cashier delete orders" 
+ON public.orders FOR DELETE 
+USING (true);
 
--- Allow public read & update on token counter
+-- POLICY 5: Read-only access to token counter
 CREATE POLICY "Allow public read token counter" 
-ON public.token_counter FOR SELECT USING (true);
-
-CREATE POLICY "Allow public update token counter" 
-ON public.token_counter FOR UPDATE USING (true);
+ON public.token_counter FOR SELECT 
+USING (true);
 
 -- 5. ENABLE REALTIME WEBSOCKET REPLICATION FOR INSTANT POS SYNC
 DO $$

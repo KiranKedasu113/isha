@@ -1,5 +1,5 @@
 /* ============================================================
--- ISHA CAFE — CENTRAL CONFIGURATION (SUPABASE POSTGRESQL)
+-- ISHA CAFE — CENTRAL CONFIGURATION (SUPABASE POSTGRESQL & QZ TRAY)
 -- ============================================================ */
 window.ISHA_CAFE_CONFIG = {
   SUPABASE_URL: "https://qftftnrqtyhvnwdhstrz.supabase.co",
@@ -16,4 +16,21 @@ function getSupabaseKey(){
   const local = localStorage.getItem('isha_cafe_supabase_key');
   if(local && local.trim()) return local.trim();
   return window.ISHA_CAFE_CONFIG.SUPABASE_KEY;
+}
+
+// Local QZ Tray Printer Preferences (stored strictly in browser localStorage)
+function getSavedBillPrinter(){
+  return localStorage.getItem('isha_cafe_bill_printer') || '';
+}
+
+function setSavedBillPrinter(name){
+  localStorage.setItem('isha_cafe_bill_printer', name);
+}
+
+function getSavedKotPrinter(){
+  return localStorage.getItem('isha_cafe_kot_printer') || '';
+}
+
+function setSavedKotPrinter(name){
+  localStorage.setItem('isha_cafe_kot_printer', name);
 }

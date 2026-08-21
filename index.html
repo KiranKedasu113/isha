@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Isha Cafe — Menu & Billing</title>
+<script src="https://cdn.jsdelivr.net/npm/qz-tray@2.2.4/qz-tray.min.js"></script>
 <script src="config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -393,6 +393,7 @@
     <nav class="tabs">
       <button class="tab-btn active" data-tab="bill">🧾 Billing</button>
       <button class="tab-btn" data-tab="table-orders">🔔 Table Orders <span id="ordersBadgeCount" style="background:#e74c3c;color:#fff;font-size:11px;font-weight:800;padding:2px 7px;border-radius:999px;margin-left:4px;display:none;">0</span></button>
+      <button class="tab-btn" data-tab="printers">🖨️ Printers <span id="qzStatusBadge" style="font-size:10px;padding:2px 6px;border-radius:10px;background:#c0392b;color:#fff;margin-left:4px;">Offline</span></button>
       <button class="tab-btn" data-tab="menu" style="display:none;">📋 Menu</button>
       <button class="tab-btn" data-tab="qr" style="display:none;">▦ Table QR</button>
     </nav>
@@ -533,6 +534,66 @@
 
     <div id="tableOrdersList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;">
       <!-- Dynamic Order Cards -->
+    </div>
+  </section>
+
+  <!-- ================= PRINTER SETTINGS VIEW ================= -->
+  <section class="view" id="view-printers">
+    <div style="max-width:850px;margin:0 auto;">
+      <div style="background:var(--bg-panel);border:1.5px solid var(--line);border-radius:16px;padding:24px;margin-bottom:24px;box-shadow:var(--shadow);">
+        <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:14px;margin-bottom:18px;flex-wrap:wrap;gap:12px;">
+          <div>
+            <h2 style="font-family:'Poppins',sans-serif;color:var(--gold);margin:0 0 4px;font-size:22px;display:flex;align-items:center;gap:10px;">
+              <span>🖨️</span> QZ Tray Thermal Printer Settings
+            </h2>
+            <p style="color:var(--cream-dim);margin:0;font-size:13.5px;">Configure silent 80mm thermal printers for Cashier Bills and Kitchen KOTs.</p>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span id="qzStatusText" style="font-size:12px;font-weight:800;padding:6px 14px;border-radius:20px;background:#c0392b;color:#fff;">Offline</span>
+            <button class="btn primary" style="width:auto;margin:0;padding:8px 16px;font-size:12.5px;" onclick="initQZTrayConnection(true)">🔄 Connect / Reconnect QZ Tray</button>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:20px;">
+          <!-- BILL PRINTER SELECTOR -->
+          <div style="background:var(--bg-card);border:1.5px solid var(--line);border-radius:12px;padding:18px;">
+            <h3 style="font-family:'Poppins',sans-serif;color:var(--gold);margin:0 0 8px;font-size:16px;display:flex;align-items:center;gap:8px;">
+              <span>🧾</span> Cashier Bill Printer
+            </h3>
+            <p style="font-size:12px;color:var(--cream-dim);margin:0 0 12px;">Prints full customer tax bills with dish prices, GST, and totals.</p>
+            <select id="qzBillPrinterSelect" style="width:100%;padding:10px 12px;background:var(--bg-panel);border:1px solid var(--line);border-radius:8px;color:var(--cream);font-size:13.5px;margin-bottom:12px;font-family:'Nunito',sans-serif;">
+              <option value="">-- Connect QZ Tray to load printers --</option>
+            </select>
+            <button class="btn ghost" style="font-size:12px;padding:8px 12px;" onclick="testPrintBillPrinter()">🧪 Test Print Bill Printer</button>
+          </div>
+
+          <!-- KITCHEN KOT PRINTER SELECTOR -->
+          <div style="background:var(--bg-card);border:1.5px solid var(--line);border-radius:12px;padding:18px;">
+            <h3 style="font-family:'Poppins',sans-serif;color:var(--green);margin:0 0 8px;font-size:16px;display:flex;align-items:center;gap:8px;">
+              <span>👨‍🍳</span> Kitchen KOT Printer
+            </h3>
+            <p style="font-size:12px;color:var(--cream-dim);margin:0 0 12px;">Prints price-free Kitchen Order Tickets (0 prices, no financial totals).</p>
+            <select id="qzKotPrinterSelect" style="width:100%;padding:10px 12px;background:var(--bg-panel);border:1px solid var(--line);border-radius:8px;color:var(--cream);font-size:13.5px;margin-bottom:12px;font-family:'Nunito',sans-serif;">
+              <option value="">-- Connect QZ Tray to load printers --</option>
+            </select>
+            <button class="btn ghost" style="font-size:12px;padding:8px 12px;" onclick="testPrintKotPrinter()">🧪 Test Print KOT Printer</button>
+          </div>
+        </div>
+
+        <div style="margin-top:20px;text-align:right;">
+          <button class="btn primary" style="width:auto;padding:12px 24px;font-size:14px;background:var(--gold);color:#1a1205;" onclick="saveQZPrinterSelections()">💾 Save Printer Preferences</button>
+        </div>
+      </div>
+
+      <div style="background:var(--bg-panel);border:1px solid var(--line);border-radius:14px;padding:20px;font-size:13px;line-height:1.6;color:var(--cream-dim);">
+        <h4 style="color:var(--gold);margin:0 0 8px;font-family:'Poppins',sans-serif;">ℹ️ How QZ Tray Works</h4>
+        <ol style="margin:0;padding-left:20px;">
+          <li><b>Download & Install QZ Tray</b> (v2.2+) on this cashier Windows PC from <a href="https://qz.io/download/" target="_blank" style="color:var(--gold);">https://qz.io/download/</a>.</li>
+          <li><b>Keep QZ Tray Running</b> in your Windows system tray (near the clock).</li>
+          <li>Click <b>Connect QZ Tray</b> above. When prompted by QZ Tray, select <i>Allow</i> to grant permission.</li>
+          <li>Select your USB / Network 80mm thermal printers from the dropdowns above and click <b>Save Printer Preferences</b>.</li>
+        </ol>
+      </div>
     </div>
   </section>
 
@@ -825,6 +886,9 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
     document.getElementById('view-'+btn.dataset.tab).classList.add('active');
     if(btn.dataset.tab === 'table-orders'){
       renderTableOrdersView();
+    }
+    if(btn.dataset.tab === 'printers'){
+      initQZTrayConnection(true);
     }
   };
 });
@@ -1618,8 +1682,6 @@ function renderSingleOrderCard(ord, isPrinted){
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
           <span style="font-size:13px;color:var(--cream-dim);font-weight:700;">Order Total:</span>
           <span style="font-family:'Roboto Mono',monospace;font-weight:800;font-size:17px;color:var(--gold);">₹${grandTotal}</span>
-        </div>
-
         <div style="display:flex;gap:6px;flex-wrap:wrap;">
           <button class="btn primary" style="flex:1;margin:0;padding:8px 6px;font-size:12px;background:var(--gold);color:#1a1205;" onclick="directPrintTableOrder('${ord.id}', 'bill')">${isPrinted ? '🖨️ Re-Print' : '🖨️ Full Bill'}</button>
           <button class="btn primary" style="flex:1;margin:0;padding:8px 6px;font-size:12px;background:#2e7d32;color:#fff;border-color:#2e7d32;" onclick="directPrintTableOrder('${ord.id}', 'chef')">👨‍🍳 Chef KOT</button>
@@ -1630,117 +1692,399 @@ function renderSingleOrderCard(ord, isPrinted){
     </div>`;
 }
 
-function directPrintTableOrder(orderId, mode = 'both'){
-  const orders = getTableOrdersFromStorage();
-  const target = orders.find(o => (''+o.id) === (''+orderId));
-  if(!target) return;
+/* ---------------- QZ TRAY SILENT PRINTING ENGINE ---------------- */
+let isQZConnected = false;
 
-  const itemIds = Object.keys(target.items || {});
-  if(!itemIds.length) return;
+async function initQZTrayConnection(interactive = false){
+  const badge = document.getElementById('qzStatusBadge');
+  const txt = document.getElementById('qzStatusText');
 
-  const name = `Table ${target.table}`;
-  const tokenNo = target.token;
+  if(!window.qz){
+    if(badge){ badge.textContent = 'Lib Error'; badge.style.background = '#c0392b'; }
+    if(txt){ txt.textContent = 'QZ Tray Library Not Loaded'; txt.style.background = '#c0392b'; }
+    if(interactive) alert("QZ Tray JavaScript library (qz-tray.min.js) failed to load.");
+    return false;
+  }
+
+  try {
+    if(!qz.websocket.isActive()){
+      qz.security.setCertificatePromise(function(resolve, reject) {
+        resolve(); // Unsigned certificate mode
+      });
+      qz.security.setSignaturePromise(function(toSign) {
+        return function(resolve, reject) { resolve(); };
+      });
+      await qz.websocket.connect({ retries: 2, delay: 1 });
+    }
+
+    isQZConnected = true;
+    if(badge){ badge.textContent = 'Connected'; badge.style.background = '#2e7d32'; }
+    if(txt){ txt.textContent = 'Online & Connected'; txt.style.background = '#2e7d32'; }
+    if(interactive) showToast('⚡ QZ Tray Connected!');
+
+    await refreshQZPrinterDropdowns();
+    return true;
+  } catch(e) {
+    isQZConnected = false;
+    if(badge){ badge.textContent = 'Offline'; badge.style.background = '#c0392b'; }
+    if(txt){ txt.textContent = 'Offline / QZ Tray Not Running'; txt.style.background = '#c0392b'; }
+    if(interactive){
+      alert("QZ Tray Connection Failed!\n\n1. Ensure the QZ Tray desktop app is installed and running on your computer.\n2. Download QZ Tray from: https://qz.io/download/\n3. Check that your browser allows WebSocket connections to localhost.");
+    }
+    return false;
+  }
+}
+
+async function refreshQZPrinterDropdowns(){
+  if(!qz.websocket.isActive()) return;
+
+  try {
+    const printers = await qz.printers.find();
+    const billSelect = document.getElementById('qzBillPrinterSelect');
+    const kotSelect = document.getElementById('qzKotPrinterSelect');
+
+    const savedBill = getSavedBillPrinter();
+    const savedKot = getSavedKotPrinter();
+
+    if(billSelect){
+      billSelect.innerHTML = printers.length > 0 
+        ? printers.map(p => `<option value="${p}" ${p === savedBill ? 'selected' : ''}>${p}</option>`).join('')
+        : '<option value="">-- No printers detected on PC --</option>';
+    }
+
+    if(kotSelect){
+      kotSelect.innerHTML = printers.length > 0 
+        ? printers.map(p => `<option value="${p}" ${p === savedKot ? 'selected' : ''}>${p}</option>`).join('')
+        : '<option value="">-- No printers detected on PC --</option>';
+    }
+  } catch(e){
+    console.error("Failed to fetch QZ Tray printers:", e);
+  }
+}
+
+function saveQZPrinterSelections(){
+  const billP = document.getElementById('qzBillPrinterSelect')?.value || '';
+  const kotP = document.getElementById('qzKotPrinterSelect')?.value || '';
+
+  if(!billP || !kotP){
+    alert("Please select both a Cashier Bill Printer and a Kitchen KOT Printer before saving.");
+    return;
+  }
+
+  setSavedBillPrinter(billP);
+  setSavedKotPrinter(kotP);
+  showToast('💾 Printer preferences saved locally!');
+  alert(`Printer Preferences Saved!\n\nBill Printer: ${billP}\nKitchen KOT Printer: ${kotP}`);
+}
+
+function buildHtmlReceipt(ord, mode){
+  const itemIds = Object.keys(ord.items || {});
   const gstOn = document.getElementById('gstToggle')?.checked || false;
   const customGstRate = parseFloat(localStorage.getItem('isha_cafe_gst_rate')) || 5;
 
-  const sub = itemIds.reduce((s, id) => {
+  let sub = 0;
+  itemIds.forEach(id => {
     const m = MENU[id];
-    return s + (m ? (parseInt(m.p)||0)*target.items[id] : 0);
-  }, 0);
+    if(m) sub += (parseInt(m.p)||0) * ord.items[id];
+  });
+  const gst = gstOn ? Math.round(sub * (customGstRate / 100)) : 0;
+  const grand = sub + gst;
+
+  const orderTitle = ord.custName || (ord.table ? `Table ${ord.table}` : 'Walk-in');
+  const tokenNo = ord.token || '101';
+  const dateStr = ord.date || new Date().toLocaleDateString();
+  const timeStr = ord.time || new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+
+  if(mode === 'chef'){
+    // PRICE-FREE KITCHEN KOT TICKET (0 PRICES, NO TOTALS)
+    const itemsList = itemIds.map(id => {
+      const m = MENU[id];
+      if(!m) return '';
+      const qty = ord.items[id];
+      return `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px dashed #bbb;font-size:14px;font-weight:bold;">
+        <span>[${m.code || 'ID'}] ${m.n}</span>
+        <span style="font-size:16px;font-weight:900;">&times; ${qty}</span>
+      </div>`;
+    }).join('');
+
+    return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    @page { size: 80mm auto; margin: 0; }
+    body { font-family: 'Courier New', Courier, monospace; width: 76mm; margin: 0 auto; padding: 4mm 2mm; color: #000; font-size: 13px; }
+    .center { text-align: center; }
+    .bold { font-weight: bold; }
+    .title { font-size: 18px; font-weight: 900; margin: 0; }
+    .badge { background: #000; color: #fff; padding: 4px 6px; font-size: 12px; font-weight: bold; letter-spacing: 1px; margin: 6px 0; display: inline-block; }
+    .token-box { border: 2.5px solid #000; padding: 6px; font-size: 24px; font-weight: 900; margin: 8px 0; }
+    .dash { border-top: 1.5px dashed #000; margin: 8px 0; }
+    .meta { font-size: 12px; font-weight: bold; margin: 6px 0; display: flex; justify-content: space-between; }
+  </style>
+</head>
+<body>
+  <div class="center title">ISHA CAFE</div>
+  <div class="center"><span class="badge">*** KITCHEN ORDER TICKET (KOT) ***</span></div>
+  <div class="center token-box">TOKEN NO: #${tokenNo}</div>
+  <div class="meta"><span>Order: ${orderTitle}</span><span>${timeStr}</span></div>
+  <div class="meta"><span>Date: ${dateStr}</span></div>
+  <div class="dash"></div>
+  <div>${itemsList}</div>
+  <div class="dash"></div>
+  <div class="center bold" style="font-size:11px;margin-top:10px;">👨‍🍳 KITCHEN COPY — NO PRICES INCLUDED</div>
+</body>
+</html>`;
+  } else {
+    // CASHIER CUSTOMER TAX BILL (FULL PRICES & TOTALS)
+    const itemsList = itemIds.map(id => {
+      const m = MENU[id];
+      if(!m) return '';
+      const qty = ord.items[id];
+      const p = (parseInt(m.p)||0) * qty;
+      return `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:13px;">
+        <span>${m.n} &times; ${qty}</span>
+        <span style="font-weight:bold;">&#8377;${p}</span>
+      </div>`;
+    }).join('');
+
+    return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    @page { size: 80mm auto; margin: 0; }
+    body { font-family: 'Courier New', Courier, monospace; width: 76mm; margin: 0 auto; padding: 4mm 2mm; color: #000; font-size: 13px; }
+    .center { text-align: center; }
+    .bold { font-weight: bold; }
+    .title { font-size: 18px; font-weight: 900; margin: 0; }
+    .sub { font-size: 10px; margin-bottom: 6px; }
+    .token-box { border: 2px solid #000; padding: 5px; font-size: 22px; font-weight: 900; margin: 6px 0; }
+    .dash { border-top: 1px dashed #000; margin: 6px 0; }
+    .meta { font-size: 11.5px; margin: 4px 0; display: flex; justify-content: space-between; }
+    .row { display: flex; justify-content: space-between; font-size: 12px; padding: 2px 0; }
+    .grand { font-size: 14px; font-weight: 900; border-top: 1px dashed #000; padding-top: 4px; margin-top: 4px; }
+  </style>
+</head>
+<body>
+  <div class="center title">ISHA CAFE</div>
+  <div class="center sub">Aswaraopeta Road, Beside Satya Durga Sweets, Jangareddigudem &middot; 9391366592</div>
+  <div class="dash"></div>
+  <div class="center token-box">TOKEN NO: #${tokenNo}</div>
+  <div class="meta"><span>Order: ${orderTitle}</span><span>${timeStr}</span></div>
+  <div class="meta"><span>Date: ${dateStr}</span></div>
+  <div class="dash"></div>
+  <div>${itemsList}</div>
+  <div class="dash"></div>
+  <div class="row"><span>Subtotal</span><span>&#8377;${sub}</span></div>
+  ${gstOn ? `<div class="row"><span>GST (${customGstRate}%)</span><span>&#8377;${gst}</span></div>` : ''}
+  <div class="row grand"><span>TOTAL AMOUNT</span><span>&#8377;${grand}</span></div>
+  <div class="dash"></div>
+  <div class="center" style="font-size:11px;margin-top:6px;">Thank You! Come Again &#9829;</div>
+</body>
+</html>`;
+  }
+}
+
+async function printQZSilent(printerName, htmlContent){
+  if(!window.qz){
+    throw new Error("QZ Tray library is not loaded.");
+  }
+  if(!qz.websocket.isActive()){
+    await initQZTrayConnection(false);
+  }
+  if(!qz.websocket.isActive()){
+    throw new Error("QZ Tray is not connected. Please start QZ Tray application on this computer.");
+  }
+  if(!printerName || !printerName.trim()){
+    throw new Error("No printer selected. Please select a printer in Printer Settings tab.");
+  }
+
+  const config = qz.configs.create(printerName.trim(), {
+    size: { width: 80, mm: true },
+    margins: { top: 0, right: 0, bottom: 0, left: 0 }
+  });
+
+  const data = [{
+    type: 'pixel',
+    format: 'html',
+    flavor: 'plain',
+    data: htmlContent
+  }];
+
+  await qz.print(config, data);
+}
+
+async function testPrintBillPrinter(){
+  const billP = getSavedBillPrinter() || document.getElementById('qzBillPrinterSelect')?.value;
+  if(!billP){
+    alert("Please select a Cashier Bill Printer first.");
+    return;
+  }
+  try {
+    const dummyOrder = {
+      token: 999,
+      custName: "TEST BILL ORDER",
+      table: "1",
+      items: { 0: 2, 5: 1 },
+      date: new Date().toLocaleDateString(),
+      time: new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})
+    };
+    const html = buildHtmlReceipt(dummyOrder, 'bill');
+    await printQZSilent(billP, html);
+    showToast(`🧪 Test Bill sent to ${billP}!`);
+  } catch(e){
+    alert(`Test Print Failed: ${e.message || e}`);
+  }
+}
+
+async function testPrintKotPrinter(){
+  const kotP = getSavedKotPrinter() || document.getElementById('qzKotPrinterSelect')?.value;
+  if(!kotP){
+    alert("Please select a Kitchen KOT Printer first.");
+    return;
+  }
+  try {
+    const dummyOrder = {
+      token: 999,
+      custName: "TEST KITCHEN KOT",
+      table: "1",
+      items: { 0: 2, 5: 1 },
+      date: new Date().toLocaleDateString(),
+      time: new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})
+    };
+    const html = buildHtmlReceipt(dummyOrder, 'chef');
+    await printQZSilent(kotP, html);
+    showToast(`🧪 Test KOT sent to ${kotP}!`);
+  } catch(e){
+    alert(`Test Print Failed: ${e.message || e}`);
+  }
+}
+
+/* ---------------- PRIMARY CASHIER DUAL ACTION: PRINT BILL + KOT ---------------- */
+async function placeOrderAndDualPrintQZ(){
+  const ids = Object.keys(cart);
+  if(!ids.length) return;
+
+  const billPrinter = getSavedBillPrinter();
+  const kotPrinter = getSavedKotPrinter();
+
+  if(!qz.websocket.isActive()){
+    try { await initQZTrayConnection(false); } catch(e){}
+  }
+
+  if(!qz.websocket.isActive()){
+    alert("⚠️ QZ Tray Connection Required!\n\n1. Ensure the QZ Tray desktop app is running on this computer.\n2. Go to Printer Settings tab to connect QZ Tray.");
+    return;
+  }
+
+  if(!billPrinter || !kotPrinter){
+    alert("⚠️ Printer Assignments Missing!\n\nPlease go to Printer Settings tab and select both your Cashier Bill Printer and Kitchen KOT Printer.");
+    return;
+  }
+
+  // 1. Get atomic token ONLY ONCE
+  let tokenNo = await fetchGlobalNextToken();
+
+  let tableVal = document.getElementById('posTableSelect').value;
+  let custVal = document.getElementById('custName').value.trim();
+  let name = (tableVal === 'Custom' && custVal) ? custVal : (tableVal || 'Walk-in');
+
+  const gstOn = document.getElementById('gstToggle').checked;
+  const customGstRate = parseFloat(localStorage.getItem('isha_cafe_gst_rate')) || 5;
+
+  const items = {};
+  let sub = 0;
+  ids.forEach(id => {
+    const qty = cart[id];
+    items[id] = qty;
+    const m = MENU[id];
+    if(m) sub += (parseInt(m.p)||0) * qty;
+  });
+
   const gst = gstOn ? Math.round(sub * (customGstRate / 100)) : 0;
   const total = sub + gst;
   const now = new Date();
 
-  // Populate Printable Receipt Spans
-  const posTokenSpan = document.getElementById('posTokenNum');
-  if(posTokenSpan) posTokenSpan.textContent = tokenNo;
-  const rcTokenSpan = document.getElementById('rcTokenNum');
-  if(rcTokenSpan) rcTokenSpan.textContent = tokenNo;
-  const rcTokenSlipSpan = document.getElementById('rcTokenSlipNum');
-  if(rcTokenSlipSpan) rcTokenSlipSpan.textContent = tokenNo;
+  const orderData = {
+    id: 'ord_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+    token: tokenNo,
+    table: (tableVal === 'Custom') ? custVal : (tableVal ? tableVal.replace('Table ','') : '1'),
+    custName: name,
+    items: items,
+    totalAmount: total,
+    status: 'Pending',
+    time: now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}),
+    date: now.toLocaleDateString(),
+    timestamp: now.toISOString()
+  };
 
-  document.getElementById('rcMeta').innerHTML =
-    `<div class="rc-line" style="font-size:12px;font-weight:700;">
-       <span>Order: ${name}</span>
-     </div>
-     <div class="rc-line" style="font-size:11px;">
-       <span>Date: ${now.toLocaleDateString()}</span>
-       <span>Time: ${now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</span>
-     </div>`;
+  // 2. Save order ONLY ONCE locally & to Supabase PostgreSQL
+  let localOrders = getTableOrdersFromStorage();
+  localOrders.unshift(orderData);
+  localStorage.setItem('isha_cafe_table_orders', JSON.stringify(localOrders));
+  pushOrderToSupabase(orderData);
 
-  document.getElementById('rcLines').innerHTML = itemIds.map(id => {
-    const m = MENU[id], qty = target.items[id];
-    return `<div class="rc-line"><span>${m.n} x${qty}</span><span>₹${m.p*qty}</span></div>`;
-  }).join('');
+  // 3. Generate HTML content for both printers
+  const billHtml = buildHtmlReceipt(orderData, 'bill');
+  const kotHtml = buildHtmlReceipt(orderData, 'chef');
 
-  let totalsHtml = `<div class="rc-line"><span>Subtotal</span><span>₹${sub}</span></div>`;
-  if(gstOn) totalsHtml += `<div class="rc-line"><span>GST (${customGstRate}%)</span><span>₹${gst}</span></div>`;
-  totalsHtml += `<div class="rc-line rc-grand"><span>TOTAL</span><span>₹${total}</span></div>`;
-  document.getElementById('rcTotals').innerHTML = totalsHtml;
-
-  // Chef KOT Slip Meta & Items (STRICTLY NO PRICES INCLUDED!)
-  document.getElementById('rcTokenMeta').innerHTML =
-    `<div class="rc-line"><span>Order / Table: ${name}</span><span>${now.toLocaleDateString()} ${now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</span></div>`;
-
-  document.getElementById('rcTokenLines').innerHTML = itemIds.map(id => {
-    const m = MENU[id], qty = target.items[id];
-    return `<div class="rc-line" style="padding:4px 0;font-size:13px;border-bottom:1px dashed #ccc;"><span><span class="item-code">[${m.code}]</span> <b>${m.n}</b></span><span style="font-weight:900;font-size:14px;">&times; ${qty}</span></div>`;
-  }).join('');
-
-  triggerSequentialAutoPrint();
-
-  // Mark as Printed and move to printed list
-  target.status = 'Printed';
-  localStorage.setItem('isha_cafe_table_orders', JSON.stringify(orders));
-
-  // Sync Printed status to Supabase PostgreSQL
+  // 4. Send print jobs silently via QZ Tray
   try {
-    const sbUrl = getSupabaseUrl();
-    const sbKey = getSupabaseKey();
-    if(sbUrl && sbKey){
-      const cleanUrl = sbUrl.replace(/\/$/, '');
-      fetch(`${cleanUrl}/rest/v1/orders?token=eq.${tokenNo}`, {
-        method: 'PATCH',
-        headers: {
-          'apikey': sbKey,
-          'Authorization': `Bearer ${sbKey}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ status: 'Printed' })
-      }).catch(e => {});
+    await printQZSilent(billPrinter, billHtml);
+    await printQZSilent(kotPrinter, kotHtml);
 
-      if(window.supabase){
-        const sb = window.supabase.createClient(sbUrl, sbKey);
-        sb.from('orders').update({ status: 'Printed' }).eq('token', tokenNo).then(()=>{});
-      }
-    }
-  } catch(e){}
+    showToast(`✅ Order #${tokenNo} Saved & Sent to Bill + Kitchen Printers!`);
 
-  renderTableOrdersView();
+    // 5. Clear cart ONLY AFTER successful print dispatch!
+    clearCart();
+    renderTableOrdersView();
 
-  showToast(`🖨️ Printed Token #${tokenNo} (${name}) — Cleared from Pending!`);
+  } catch(err) {
+    console.error("QZ Dual Print Failed:", err);
+    alert(`Printing Failed: ${err.message || err}\n\nOrder #${tokenNo} was saved, but printing encountered an error.`);
+  }
 }
 
-function printAllPendingOrders(){
+/* ---------------- SINGLE REPRINT ACTIONS ---------------- */
+async function directPrintTableOrder(orderId, mode = 'bill'){
   const orders = getTableOrdersFromStorage();
-  const pending = orders.filter(o => o.status !== 'Printed');
-  if(!pending.length){
-    showToast('No pending orders to print!');
+  const target = orders.find(o => (''+o.id) === (''+orderId));
+  if(!target) return;
+
+  const billPrinter = getSavedBillPrinter();
+  const kotPrinter = getSavedKotPrinter();
+
+  if(!qz.websocket.isActive()){
+    try { await initQZTrayConnection(false); } catch(e){}
+  }
+
+  if(!qz.websocket.isActive()){
+    alert("QZ Tray is not connected!\n\nPlease start QZ Tray on your PC to print.");
     return;
   }
 
-  // Direct print the first pending order and mark all as printed
-  directPrintTableOrder(pending[0].id);
+  const targetPrinter = (mode === 'chef') ? kotPrinter : billPrinter;
+  if(!targetPrinter){
+    alert(`No printer assigned for ${mode === 'chef' ? 'Kitchen KOT' : 'Cashier Bill'}.\n\nPlease go to Printer Settings tab to select your printer.`);
+    return;
+  }
 
-  // Mark remaining pending orders as printed
-  pending.forEach(o => {
-    o.status = 'Printed';
+  const htmlContent = buildHtmlReceipt(target, mode);
+
+  try {
+    await printQZSilent(targetPrinter, htmlContent);
+
+    target.status = 'Printed';
+    localStorage.setItem('isha_cafe_table_orders', JSON.stringify(orders));
+
+    // Update status in Supabase PostgreSQL
     try {
       const sbUrl = getSupabaseUrl();
       const sbKey = getSupabaseKey();
       if(sbUrl && sbKey){
         const cleanUrl = sbUrl.replace(/\/$/, '');
-        fetch(`${cleanUrl}/rest/v1/orders?token=eq.${o.token}`, {
+        fetch(`${cleanUrl}/rest/v1/orders?token=eq.${target.token}`, {
           method: 'PATCH',
           headers: {
             'apikey': sbKey,
