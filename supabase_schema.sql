@@ -93,10 +93,31 @@ CREATE POLICY "Allow public read token counter"
 ON public.token_counter FOR SELECT 
 USING (true);
 
--- 5. ENABLE REALTIME WEBSOCKET REPLICATION FOR INSTANT POS SYNC
+-- 5. CREATE CAFE MENU TABLE FOR CROSS-DEVICE MENU & IMAGE SYNC
+CREATE TABLE IF NOT EXISTS public.cafe_menu (
+    id INT PRIMARY KEY DEFAULT 1,
+    items JSONB NOT NULL DEFAULT '[]'::jsonb,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE public.cafe_menu ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow public read cafe_menu" ON public.cafe_menu;
+DROP POLICY IF EXISTS "Allow public write cafe_menu" ON public.cafe_menu;
+
+CREATE POLICY "Allow public read cafe_menu" ON public.cafe_menu FOR SELECT USING (true);
+CREATE POLICY "Allow public write cafe_menu" ON public.cafe_menu FOR ALL USING (true) WITH CHECK (true);
+
+-- 6. ENABLE REALTIME WEBSOCKET REPLICATION FOR ORDERS & MENU SYNC
 DO $$
 BEGIN
     ALTER PUBLICATION supabase_realtime ADD TABLE public.orders;
+EXCEPTION
+    WHEN OTHERS THEN NULL;
+END $$;
+
+DO $$
+BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.cafe_menu;
 EXCEPTION
     WHEN OTHERS THEN NULL;
 END $$;

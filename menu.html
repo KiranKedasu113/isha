@@ -883,27 +883,67 @@ MENU.forEach((m,i)=>{
   m.img = getDishImage(m.n, m.c, m.img);
 });
 
-// Real-time synchronization when admin updates menu
+// BroadcastChannel & Storage Event Real-time synchronization when admin updates menu
+const ishaMobBc = (typeof BroadcastChannel !== 'undefined') ? new BroadcastChannel('isha_menu_channel') : null;
+
+function applyFreshMobMenu(freshList) {
+  if (Array.isArray(freshList) && freshList.length > 0) {
+    MENU = freshList.filter(m => m.c !== 'Irani');
+    MENU.forEach((m, i) => {
+      m.id = i;
+      m.code = (m.code !== undefined && m.code !== null && m.code !== '') ? m.code : (i + 1);
+      m.img = getDishImage(m.n, m.c, m.img);
+    });
+    try {
+      localStorage.setItem('isha_cafe_menu', JSON.stringify(freshList));
+      localStorage.setItem('isha_cafe_custom_menu', JSON.stringify(freshList));
+    } catch(e){}
+    if (typeof renderMobItems === 'function') renderMobItems();
+    if (typeof renderMobCatPills === 'function') renderMobCatPills();
+  }
+}
+
+if (ishaMobBc) {
+  ishaMobBc.onmessage = (evt) => {
+    if (evt.data && evt.data.type === 'MENU_UPDATED') {
+      applyFreshMobMenu(evt.data.menu);
+    }
+  };
+}
+
 window.addEventListener('storage', (e) => {
   if (e.key === 'isha_cafe_menu' || e.key === 'isha_cafe_custom_menu') {
     const fresh = localStorage.getItem('isha_cafe_menu');
     if (fresh) {
-      try {
-        const parsed = JSON.parse(fresh);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          MENU = parsed.filter(m => m.c !== 'Irani');
-          MENU.forEach((m, i) => {
-            m.id = i;
-            m.code = (m.code !== undefined && m.code !== null && m.code !== '') ? m.code : (i + 1);
-            m.img = getDishImage(m.n, m.c, m.img);
-          });
-          if (typeof renderMobItems === 'function') renderMobItems();
-          if (typeof renderMobCatPills === 'function') renderMobCatPills();
-        }
-      } catch(err){}
+      try { applyFreshMobMenu(JSON.parse(fresh)); } catch(err){}
     }
   }
 });
+
+// Fetch latest cloud menu from Supabase PostgreSQL
+async function syncCloudMenuMob() {
+  const url = getSupabaseUrl();
+  const key = getSupabaseKey();
+  if (url && key && window.supabase) {
+    try {
+      const sb = window.supabase.createClient(url, key);
+      const { data } = await sb.from('cafe_menu').select('items').eq('id', 1).maybeSingle();
+      if (data && Array.isArray(data.items) && data.items.length > 0) {
+        applyFreshMobMenu(data.items);
+      }
+      
+      // Subscribe to Supabase Realtime changes
+      sb.channel('public:cafe_menu_mob')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'cafe_menu' }, payload => {
+          if (payload.new && Array.isArray(payload.new.items)) {
+            applyFreshMobMenu(payload.new.items);
+          }
+        })
+        .subscribe();
+    } catch(err){}
+  }
+}
+setTimeout(syncCloudMenuMob, 500);
 
 const CATS = [...new Set(MENU.map(m=>m.c))];
 

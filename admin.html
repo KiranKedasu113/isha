@@ -888,11 +888,31 @@ function loadMenuData(){
 }
 loadMenuData();
 
-function saveCurrentMenu(notify = false){
+const ishaMenuBc = (typeof BroadcastChannel !== 'undefined') ? new BroadcastChannel('isha_menu_channel') : null;
+
+async function saveCurrentMenu(notify = false){
   localStorage.setItem('isha_cafe_menu', JSON.stringify(currentMenu));
   localStorage.setItem('isha_cafe_custom_menu', JSON.stringify(currentMenu));
+  
+  // Real-time same-device tab sync
   try { window.dispatchEvent(new Event('storage')); } catch(e){}
-  if(notify) showToast('✅ All menu changes saved successfully!');
+  try {
+    if(ishaMenuBc) ishaMenuBc.postMessage({ type: 'MENU_UPDATED', menu: currentMenu });
+  } catch(e){}
+
+  // Cross-device Supabase cloud sync
+  const url = getSupabaseUrl();
+  const key = getSupabaseKey();
+  if(url && key && window.supabase){
+    try {
+      const sb = window.supabase.createClient(url, key);
+      await sb.from('cafe_menu').upsert({ id: 1, items: currentMenu, updated_at: new Date().toISOString() });
+    } catch(err){
+      console.warn('Supabase menu sync notice:', err);
+    }
+  }
+
+  if(notify) showToast('✅ All menu changes saved & synced successfully!');
 }
 
 function populateCatFilter(){
