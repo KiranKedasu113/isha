@@ -219,13 +219,21 @@
 
   /* PRINTING ALL QR CODES */
   @media print{
-    body *{visibility:hidden;}
-    #qrPrintSection, #qrPrintSection *{visibility:visible;}
-    #qrPrintSection{
-      position:fixed;top:0;left:0;width:100%;
-      display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:14px;
+    @page { size: A4 portrait; margin: 10mm; }
+    html, body { margin: 0 !important; padding: 0 !important; height: auto !important; }
+    body > .app { display: none !important; }
+    #qrPrintSection {
+      display: grid !important;
+      position: relative !important;
+      top: 0; left: 0; width: 100%;
+      grid-template-columns: repeat(3, 1fr) !important;
+      gap: 14px !important;
+      padding: 14px !important;
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
     }
-    .table-qr-card{break-inside:avoid;border:1px dashed #999;box-shadow:none;}
+    #qrPrintSection * { visibility: visible !important; }
+    .table-qr-card{break-inside:avoid;page-break-inside:avoid;border:1px dashed #999;box-shadow:none;}
   }
 </style>
 </head>

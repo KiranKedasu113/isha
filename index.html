@@ -351,14 +351,32 @@
   #receipt{display:none;}
   @media print{
     @page { size: 80mm auto; margin: 0; }
-    body *{visibility:hidden;}
-    #receipt, #receipt *{visibility:visible;}
-    #receipt{
-      display:block;position:absolute;top:0;left:0;
-      width:78mm;max-width:80mm;margin:0 auto;
-      padding:4mm 2mm;background:#fff;color:#000;
-      font-family:'Roboto Mono',monospace;font-size:12px;
+    html, body {
+      margin: 0 !important;
+      padding: 0 !important;
+      height: auto !important;
+      overflow: visible !important;
+      page-break-after: avoid !important;
+      page-break-before: avoid !important;
     }
+    body > .app { display: none !important; }
+    #receipt {
+      display: block !important;
+      position: relative !important;
+      width: 76mm !important;
+      max-width: 80mm !important;
+      margin: 0 auto !important;
+      padding: 2mm 2mm !important;
+      background: #fff !important;
+      color: #000 !important;
+      font-family: 'Roboto Mono', monospace !important;
+      font-size: 12px !important;
+      page-break-after: avoid !important;
+      page-break-inside: avoid !important;
+      break-after: avoid !important;
+      break-inside: avoid !important;
+    }
+    #receipt * { visibility: visible !important; page-break-inside: avoid !important; }
     #receipt h2{text-align:center;margin:0 0 2px;font-size:16px;font-weight:900;}
     #receipt .rc-sub{text-align:center;font-size:10px;margin-bottom:8px;}
     #receipt .rc-line{display:flex;justify-content:space-between;font-size:11.5px;padding:3px 0;}
@@ -367,15 +385,21 @@
   }
 
   /* print just the table QR sheet when that button is used */
-  body.printing-qrs #receipt{display:none;}
+  body.printing-qrs #receipt{display:none !important;}
   @media print{
-    body.printing-qrs *{visibility:hidden;}
-    body.printing-qrs #tableQrGrid, body.printing-qrs #tableQrGrid *{visibility:visible;}
-    body.printing-qrs #tableQrGrid{
-      position:fixed;top:0;left:0;width:100%;
-      display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:14px;
+    body.printing-qrs > .app { display: none !important; }
+    body.printing-qrs #tableQrGrid {
+      display: grid !important;
+      position: relative !important;
+      width: 100% !important;
+      grid-template-columns: repeat(3, 1fr) !important;
+      gap: 14px !important;
+      padding: 14px !important;
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
     }
-    body.printing-qrs .table-qr-card{break-inside:avoid;border:1px dashed #999;box-shadow:none;}
+    body.printing-qrs #tableQrGrid * { visibility: visible !important; }
+    body.printing-qrs .table-qr-card{break-inside:avoid;page-break-inside:avoid;border:1px dashed #999;box-shadow:none;}
   }
 </style>
 </head>
@@ -1815,14 +1839,27 @@ function buildHtmlReceipt(ord, mode){
   <meta charset="utf-8">
   <style>
     @page { size: 80mm auto; margin: 0; }
-    body { font-family: 'Courier New', Courier, monospace; width: 76mm; margin: 0 auto; padding: 4mm 2mm; color: #000; font-size: 13px; }
+    html, body {
+      margin: 0 !important;
+      padding: 0 !important;
+      width: 76mm;
+      font-family: 'Courier New', Courier, monospace;
+      color: #000;
+      font-size: 13px;
+      page-break-after: avoid !important;
+      page-break-inside: avoid !important;
+      break-after: avoid !important;
+      break-inside: avoid !important;
+    }
+    body { padding: 2mm 1mm; box-sizing: border-box; }
+    * { page-break-inside: avoid !important; break-inside: avoid !important; box-sizing: border-box; }
     .center { text-align: center; }
     .bold { font-weight: bold; }
     .title { font-size: 18px; font-weight: 900; margin: 0; }
-    .badge { background: #000; color: #fff; padding: 4px 6px; font-size: 12px; font-weight: bold; letter-spacing: 1px; margin: 6px 0; display: inline-block; }
-    .token-box { border: 2.5px solid #000; padding: 6px; font-size: 24px; font-weight: 900; margin: 8px 0; }
-    .dash { border-top: 1.5px dashed #000; margin: 8px 0; }
-    .meta { font-size: 12px; font-weight: bold; margin: 6px 0; display: flex; justify-content: space-between; }
+    .badge { background: #000; color: #fff; padding: 3px 5px; font-size: 11px; font-weight: bold; letter-spacing: 1px; margin: 4px 0; display: inline-block; }
+    .token-box { border: 2px solid #000; padding: 4px; font-size: 22px; font-weight: 900; margin: 6px 0; }
+    .dash { border-top: 1.5px dashed #000; margin: 6px 0; }
+    .meta { font-size: 12px; font-weight: bold; margin: 4px 0; display: flex; justify-content: space-between; }
   </style>
 </head>
 <body>
@@ -1834,7 +1871,7 @@ function buildHtmlReceipt(ord, mode){
   <div class="dash"></div>
   <div>${itemsList}</div>
   <div class="dash"></div>
-  <div class="center bold" style="font-size:11px;margin-top:10px;">👨‍🍳 KITCHEN COPY — NO PRICES INCLUDED</div>
+  <div class="center bold" style="font-size:11px;margin-top:6px;">👨‍🍳 KITCHEN COPY — NO PRICES INCLUDED</div>
 </body>
 </html>`;
   } else {
@@ -1844,7 +1881,7 @@ function buildHtmlReceipt(ord, mode){
       if(!m) return '';
       const qty = ord.items[id];
       const p = (parseInt(m.p)||0) * qty;
-      return `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:13px;">
+      return `<div style="display:flex;justify-content:space-between;padding:2px 0;font-size:13px;">
         <span>${m.n} &times; ${qty}</span>
         <span style="font-weight:bold;">&#8377;${p}</span>
       </div>`;
@@ -1856,14 +1893,27 @@ function buildHtmlReceipt(ord, mode){
   <meta charset="utf-8">
   <style>
     @page { size: 80mm auto; margin: 0; }
-    body { font-family: 'Courier New', Courier, monospace; width: 76mm; margin: 0 auto; padding: 4mm 2mm; color: #000; font-size: 13px; }
+    html, body {
+      margin: 0 !important;
+      padding: 0 !important;
+      width: 76mm;
+      font-family: 'Courier New', Courier, monospace;
+      color: #000;
+      font-size: 13px;
+      page-break-after: avoid !important;
+      page-break-inside: avoid !important;
+      break-after: avoid !important;
+      break-inside: avoid !important;
+    }
+    body { padding: 2mm 1mm; box-sizing: border-box; }
+    * { page-break-inside: avoid !important; break-inside: avoid !important; box-sizing: border-box; }
     .center { text-align: center; }
     .bold { font-weight: bold; }
     .title { font-size: 18px; font-weight: 900; margin: 0; }
-    .sub { font-size: 10px; margin-bottom: 6px; }
-    .token-box { border: 2px solid #000; padding: 5px; font-size: 22px; font-weight: 900; margin: 6px 0; }
-    .dash { border-top: 1px dashed #000; margin: 6px 0; }
-    .meta { font-size: 11.5px; margin: 4px 0; display: flex; justify-content: space-between; }
+    .sub { font-size: 10px; margin-bottom: 4px; }
+    .token-box { border: 2px solid #000; padding: 4px; font-size: 22px; font-weight: 900; margin: 5px 0; }
+    .dash { border-top: 1px dashed #000; margin: 5px 0; }
+    .meta { font-size: 11.5px; margin: 3px 0; display: flex; justify-content: space-between; }
     .row { display: flex; justify-content: space-between; font-size: 12px; padding: 2px 0; }
     .grand { font-size: 14px; font-weight: 900; border-top: 1px dashed #000; padding-top: 4px; margin-top: 4px; }
   </style>
@@ -1882,7 +1932,7 @@ function buildHtmlReceipt(ord, mode){
   ${gstOn ? `<div class="row"><span>GST (${customGstRate}%)</span><span>&#8377;${gst}</span></div>` : ''}
   <div class="row grand"><span>TOTAL AMOUNT</span><span>&#8377;${grand}</span></div>
   <div class="dash"></div>
-  <div class="center" style="font-size:11px;margin-top:6px;">Thank You! Come Again &#9829;</div>
+  <div class="center" style="font-size:11px;margin-top:4px;">Thank You! Come Again &#9829;</div>
 </body>
 </html>`;
   }
