@@ -1715,41 +1715,53 @@ function renderSingleOrderCard(ord, isPrinted){
     const qty = ord.items[id];
     const itemPrice = (parseInt(m.p)||0) * qty;
     grandTotal += itemPrice;
-    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:13px;border-bottom:1px dashed rgba(255,255,255,0.08);">
-      <span><span class="item-code">${m.code}</span> <b>${m.n}</b> &times; ${qty}</span>
-      <span style="font-family:'Roboto Mono',monospace;color:var(--gold);font-weight:700;">₹${itemPrice}</span>
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:13px;border-bottom:1px dashed rgba(255,255,255,0.08);">
+      <span style="display:flex;align-items:center;gap:6px;overflow:hidden;text-overflow:ellipsis;">
+        <span class="item-code" style="flex-shrink:0;">${m.code}</span>
+        <b style="color:var(--cream);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${m.n}</b>
+        <span style="color:var(--gold);font-weight:800;white-space:nowrap;">&times; ${qty}</span>
+      </span>
+      <span style="font-family:'Roboto Mono',monospace;color:var(--gold);font-weight:700;flex-shrink:0;margin-left:8px;">₹${itemPrice}</span>
     </div>`;
   }).join('');
 
   return `
-    <div style="background:var(--bg-panel);border:1.5px solid ${isPrinted ? 'var(--green)' : 'var(--line)'};border-radius:14px;padding:16px;box-shadow:var(--shadow);display:flex;flex-direction:column;justify-content:space-between;">
+    <div style="background:var(--bg-panel);border:1.5px solid ${isPrinted ? 'rgba(46,125,50,0.5)' : 'var(--line)'};border-radius:14px;padding:16px;box-shadow:var(--shadow);display:flex;flex-direction:column;justify-content:space-between;">
       <div>
-        <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:10px;">
-          <div style="background:${isPrinted ? 'var(--green)' : 'var(--gold)'};color:#1a1205;font-family:'Poppins',sans-serif;font-weight:900;font-size:12px;padding:4px 10px;border-radius:6px;">
+        <!-- CARD TOP BAR -->
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:12px;">
+          <div style="background:${isPrinted ? '#2e7d32' : 'var(--gold)'};color:${isPrinted ? '#fff' : '#1a1205'};font-family:'Poppins',sans-serif;font-weight:900;font-size:12px;padding:4px 10px;border-radius:20px;white-space:nowrap;letter-spacing:.3px;">
             TOKEN #${ord.token || '101'}
           </div>
-          <div style="font-family:'Poppins',sans-serif;font-weight:800;font-size:14px;color:var(--cream);">
+          <div style="font-family:'Poppins',sans-serif;font-weight:800;font-size:14px;color:var(--cream);white-space:nowrap;">
             📍 Table ${ord.table || '1'}
           </div>
-          <div style="font-size:11px;color:${isPrinted ? 'var(--green)' : 'var(--cream-dim)'};font-weight:700;">
+          <div style="font-size:11px;color:${isPrinted ? '#4caf50' : 'var(--cream-dim)'};font-weight:700;white-space:nowrap;">
             ${isPrinted ? '✅ Printed' : '⏰ ' + (ord.time || '')}
           </div>
         </div>
 
+        <!-- ITEMS LIST -->
         <div style="margin-bottom:12px;">
           ${itemsHtml}
         </div>
       </div>
 
-      <div style="border-top:1.5px solid var(--line);padding-top:10px;margin-top:8px;">
+      <!-- CARD FOOTER & ACTIONS -->
+      <div style="border-top:1.5px solid var(--line);padding-top:10px;margin-top:4px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
           <span style="font-size:13px;color:var(--cream-dim);font-weight:700;">Order Total:</span>
-          <span style="font-family:'Roboto Mono',monospace;font-weight:800;font-size:17px;color:var(--gold);">₹${grandTotal}</span>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;">
-          <button class="btn primary" style="flex:1;margin:0;padding:8px 6px;font-size:12px;background:var(--gold);color:#1a1205;" onclick="directPrintTableOrder('${ord.id}', 'bill')">${isPrinted ? '🖨️ Re-Print' : '🖨️ Full Bill'}</button>
-          <button class="btn primary" style="flex:1;margin:0;padding:8px 6px;font-size:12px;background:#2e7d32;color:#fff;border-color:#2e7d32;" onclick="directPrintTableOrder('${ord.id}', 'chef')">👨‍🍳 Chef KOT</button>
-          ${!isPrinted ? `<button class="btn ghost" style="margin:0;padding:8px 6px;font-size:12px;" onclick="loadTableOrderToPOS('${ord.id}')">📥 Load</button>` : ''}
-          <button class="btn ghost" style="margin:0;padding:8px 6px;font-size:12px;color:var(--red);border-color:var(--red);" onclick="deleteTableOrder('${ord.id}')">✕ Clear</button>
+          <span style="font-family:'Roboto Mono',monospace;font-weight:900;font-size:18px;color:var(--gold);">₹${grandTotal}</span>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px;">
+          <button class="btn primary" style="margin:0;padding:8px 6px;font-size:12px;background:var(--gold);color:#1a1205;border:none;" onclick="directPrintTableOrder('${ord.id}', 'bill')">${isPrinted ? '🖨️ Re-Print' : '🖨️ Bill'}</button>
+          <button class="btn primary" style="margin:0;padding:8px 6px;font-size:12px;background:#2e7d32;color:#fff;border-color:#2e7d32;" onclick="directPrintTableOrder('${ord.id}', 'chef')">👨‍🍳 Chef KOT</button>
+        </div>
+
+        <div style="display:flex;gap:8px;">
+          ${!isPrinted ? `<button class="btn ghost" style="flex:1;margin:0;padding:6px;font-size:11.5px;" onclick="loadTableOrderToPOS('${ord.id}')">📥 Load into POS</button>` : ''}
+          <button class="btn ghost" style="flex:1;margin:0;padding:6px;font-size:11.5px;color:#e74c3c;border-color:rgba(231,76,60,0.35);" onclick="deleteTableOrder('${ord.id}')">✕ Clear Order</button>
         </div>
       </div>
     </div>`;
