@@ -740,11 +740,21 @@ function submitCustomerOrderAndStartGame(){
 
   // Broadcast order details to Cashier POS
   const orderDetails = {
+    id: Date.now() + '_' + Math.floor(Math.random()*1000),
     token: currentOrderToken,
     table: table,
     items: { ...mobCart },
-    time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})
+    status: 'Pending',
+    time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12: true})
   };
+
+  let tableOrders = [];
+  try {
+    tableOrders = JSON.parse(localStorage.getItem('isha_cafe_table_orders')) || [];
+  } catch(e){}
+  tableOrders.unshift(orderDetails);
+  localStorage.setItem('isha_cafe_table_orders', JSON.stringify(tableOrders));
+
   localStorage.setItem('isha_cafe_latest_order', JSON.stringify(orderDetails));
   localStorage.setItem('isha_cafe_order_trigger', Date.now());
 
