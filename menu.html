@@ -837,7 +837,11 @@ MENU = MENU.filter(m => m.c !== 'Irani');
 MENU.forEach((m,i)=>{
   m.id = i;
   m.code = (m.code !== undefined && m.code !== null && m.code !== '') ? m.code : (i + 1);
-  m.img = DISH_IMGS[m.n] || m.img || DEFAULT_CAT_IMGS[m.c] || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&auto=format&fit=crop&q=80';
+  if (DISH_IMGS[m.n]) {
+    m.img = DISH_IMGS[m.n];
+  } else if (!m.img || m.img === 'images/fried_rice.jpg') {
+    m.img = DEFAULT_CAT_IMGS[m.c] || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&auto=format&fit=crop&q=80';
+  }
 });
 
 const CATS = [...new Set(MENU.map(m=>m.c))];
