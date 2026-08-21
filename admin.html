@@ -822,9 +822,22 @@ const DISH_IMGS = {
   "Double Egg Chicken Fried Rice": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&auto=format&fit=crop&q=80",
   "Chicken Wings Fried Rice (Half)": "images/chicken_wings_fried_rice.jpg",
   "Chicken Wings Fried Rice (Full)": "images/chicken_wings_fried_rice.jpg",
+  "Chilly Chicken": "https://images.unsplash.com/photo-1610057099443-fde8c4d50f91?w=400&auto=format&fit=crop&q=80",
   "Chicken Lollipop Fried Rice (Half)": "https://images.unsplash.com/photo-1608039829572-78524f79c4c7?w=400&auto=format&fit=crop&q=80",
   "Chicken Lollipop Fried Rice (Full)": "https://images.unsplash.com/photo-1562967914-608f82629710?w=400&auto=format&fit=crop&q=80"
 };
+
+function getDishImage(dishName, catName) {
+  if (!dishName) return DEFAULT_CAT_IMGS[catName] || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&auto=format&fit=crop&q=80';
+  const cleanName = dishName.trim();
+  if (DISH_IMGS[cleanName]) return DISH_IMGS[cleanName];
+  
+  const keys = Object.keys(DISH_IMGS);
+  const foundKey = keys.find(k => k.toLowerCase() === cleanName.toLowerCase());
+  if (foundKey) return DISH_IMGS[foundKey];
+  
+  return DEFAULT_CAT_IMGS[catName] || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&auto=format&fit=crop&q=80';
+}
 
 function loadMenuData(){
   const saved = localStorage.getItem('isha_cafe_menu');
@@ -845,11 +858,7 @@ function loadMenuData(){
   currentMenu.forEach((m,i)=>{
     m.id = i;
     m.code = (m.code !== undefined && m.code !== null && m.code !== '') ? m.code : (i + 1);
-    if (DISH_IMGS[m.n]) {
-      m.img = DISH_IMGS[m.n];
-    } else if (!m.img || m.img === 'images/fried_rice.jpg') {
-      m.img = DEFAULT_CAT_IMGS[m.c] || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300&auto=format&fit=crop&q=80';
-    }
+    m.img = getDishImage(m.n, m.c);
   });
   saveCurrentMenu(false);
 }
