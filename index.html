@@ -1187,7 +1187,8 @@ function saveProcessedOrderId(id){
 }
 
 function processReceivedOrder(orderData, isInitialPoll = false){
-  if(!orderData || !orderData.token || !orderData.id) return;
+  if(!orderData || !orderData.token) return;
+  if(!orderData.id) orderData.id = 'token_' + orderData.token;
   
   const clearedSet = getClearedOrderIds();
   if(clearedSet.has(''+orderData.id) || clearedSet.has(''+orderData.token)){
@@ -1195,20 +1196,24 @@ function processReceivedOrder(orderData, isInitialPoll = false){
   }
 
   const processedSet = getProcessedOrderIds();
-  const alreadyProcessed = processedSet.has(orderData.id);
+  const alreadyProcessed = processedSet.has(''+orderData.id) || processedSet.has('token_' + orderData.token);
 
-  // 1. Save to Cashier localStorage Table Orders
+  // 1. Save to Cashier localStorage Table Orders (Deduplicate by Token)
   let tableOrders = [];
   try {
     tableOrders = JSON.parse(localStorage.getItem('isha_cafe_table_orders')) || [];
   } catch(e){}
   
-  if(!tableOrders.some(o => (''+o.id) === (''+orderData.id))){
+  const existingIdx = tableOrders.findIndex(o => (''+o.token) === (''+orderData.token) || (''+o.id) === (''+orderData.id));
+  if(existingIdx === -1){
     tableOrders.unshift(orderData);
-    localStorage.setItem('isha_cafe_table_orders', JSON.stringify(tableOrders));
+  } else {
+    tableOrders[existingIdx] = { ...tableOrders[existingIdx], ...orderData };
   }
+  localStorage.setItem('isha_cafe_table_orders', JSON.stringify(tableOrders));
 
   saveProcessedOrderId(orderData.id);
+  saveProcessedOrderId('token_' + orderData.token);
   renderTableOrdersView();
 
   // 2. Only show popup and play chime IF this order was NOT previously processed AND NOT initial page refresh poll
@@ -1411,7 +1416,17 @@ function dismissOrderPopup(){
 /* ---------------- TABLE ORDERS MANAGER ---------------- */
 function getTableOrdersFromStorage(){
   try {
-    return JSON.parse(localStorage.getItem('isha_cafe_table_orders')) || [];
+    const raw = JSON.parse(localStorage.getItem('isha_cafe_table_orders')) || [];
+    const uniqueMap = new Map();
+    raw.forEach(ord => {
+      if(ord && ord.token){
+        const key = '' + ord.token;
+        if(!uniqueMap.has(key)){
+          uniqueMap.set(key, ord);
+        }
+      }
+    });
+    return Array.from(uniqueMap.values());
   } catch(e){
     return [];
   }
