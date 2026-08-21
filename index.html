@@ -2095,7 +2095,10 @@ async function directPrintTableOrder(orderId, mode = 'bill'){
         }).catch(e => {});
       }
     } catch(e){}
-  });
+  } catch(err) {
+    console.error("Print Failed:", err);
+    alert(`Printing Failed: ${err.message || err}`);
+  }
 
   localStorage.setItem('isha_cafe_table_orders', JSON.stringify(orders));
   renderTableOrdersView();
