@@ -1102,8 +1102,33 @@ async function fetchGlobalNextToken(){
   return nextToken;
 }
 
+function triggerSequentialAutoPrint(onComplete){
+  const taxBillSec = document.getElementById('taxBillSection');
+  const chefSec = document.getElementById('customerTokenSection');
+
+  // Step 1: Print Cashier Tax Bill (Prices Included) -> Sent to Cashier Printer
+  if(taxBillSec) taxBillSec.style.display = 'block';
+  if(chefSec) chefSec.style.display = 'none';
+
+  window.print();
+
+  // Step 2: Automatically Trigger Chef KOT Ticket (0 Prices) -> Sent to Chef Printer
+  setTimeout(() => {
+    if(taxBillSec) taxBillSec.style.display = 'none';
+    if(chefSec) chefSec.style.display = 'block';
+
+    window.print();
+
+    // Restore defaults
+    if(taxBillSec) taxBillSec.style.display = 'block';
+    if(chefSec) chefSec.style.display = 'none';
+
+    if(typeof onComplete === 'function') onComplete();
+  }, 400);
+}
+
 /* ---------------- CASHIER PLACE ORDER & PRINT ---------------- */
-async function placeCashierOrder(shouldPrint = true, mode = 'bill'){
+async function placeCashierOrder(shouldPrint = true){
   const ids = Object.keys(cart);
   if(!ids.length) return;
 
@@ -1159,27 +1184,11 @@ async function placeCashierOrder(shouldPrint = true, mode = 'bill'){
     return `<div class="rc-line" style="padding:4px 0;font-size:13px;border-bottom:1px dashed #ccc;"><span><span class="item-code">[${m.code}]</span> <b>${m.n}</b></span><span style="font-weight:900;font-size:14px;">&times; ${qty}</span></div>`;
   }).join('');
 
-  const taxBillSec = document.getElementById('taxBillSection');
-  const chefSec = document.getElementById('customerTokenSection');
-
-  if(mode === 'chef'){
-    if(taxBillSec) taxBillSec.style.display = 'none';
-    if(chefSec) chefSec.style.display = 'block';
-  } else {
-    // 'bill' mode (Cashier Printer): Prints Cashier Tax Bill ONLY!
-    if(taxBillSec) taxBillSec.style.display = 'block';
-    if(chefSec) chefSec.style.display = 'none';
-  }
-
   showToast(`Order Placed! Token #${tokenNo} (${name})`);
 
   if(shouldPrint){
-    window.print();
+    triggerSequentialAutoPrint();
   }
-
-  // Restore defaults
-  if(taxBillSec) taxBillSec.style.display = 'block';
-  if(chefSec) chefSec.style.display = 'none';
 
   // Clear cart after placing order
   clearCart();
@@ -1659,23 +1668,7 @@ function directPrintTableOrder(orderId, mode = 'both'){
     return `<div class="rc-line" style="padding:4px 0;font-size:13px;border-bottom:1px dashed #ccc;"><span><span class="item-code">[${m.code}]</span> <b>${m.n}</b></span><span style="font-weight:900;font-size:14px;">&times; ${qty}</span></div>`;
   }).join('');
 
-  const taxBillSec = document.getElementById('taxBillSection');
-  const chefSec = document.getElementById('customerTokenSection');
-
-  if(mode === 'chef'){
-    if(taxBillSec) taxBillSec.style.display = 'none';
-    if(chefSec) chefSec.style.display = 'block';
-  } else {
-    // Default: 'bill' mode (Cashier Printer): Prints Cashier Tax Bill ONLY!
-    if(taxBillSec) taxBillSec.style.display = 'block';
-    if(chefSec) chefSec.style.display = 'none';
-  }
-
-  window.print();
-
-  // Restore defaults
-  if(taxBillSec) taxBillSec.style.display = 'block';
-  if(chefSec) chefSec.style.display = 'none';
+  triggerSequentialAutoPrint();
 
   // Mark as Printed and move to printed list
   target.status = 'Printed';
