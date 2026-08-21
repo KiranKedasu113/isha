@@ -781,18 +781,37 @@ async function pushOrderToCloudStore(orderDetails){
     });
   } catch(e){}
 
-  // Supabase PostgreSQL Direct Push
+  // Supabase PostgreSQL Direct Push (REST API + SDK)
   try {
     const sbUrl = localStorage.getItem('isha_cafe_supabase_url');
     const sbKey = localStorage.getItem('isha_cafe_supabase_key');
-    if(sbUrl && sbKey && window.supabase){
-      const sb = window.supabase.createClient(sbUrl, sbKey);
-      await sb.from('orders').insert([{
-        token: orderDetails.token,
-        table_no: orderDetails.table,
-        items: orderDetails.items,
-        status: orderDetails.status || 'Pending'
-      }]);
+    if(sbUrl && sbKey){
+      const cleanUrl = sbUrl.replace(/\/$/, '');
+      fetch(`${cleanUrl}/rest/v1/orders`, {
+        method: 'POST',
+        headers: {
+          'apikey': sbKey,
+          'Authorization': `Bearer ${sbKey}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify({
+          token: orderDetails.token,
+          table_no: orderDetails.table,
+          items: orderDetails.items,
+          status: orderDetails.status || 'Pending'
+        })
+      }).catch(e => {});
+
+      if(window.supabase){
+        const sb = window.supabase.createClient(sbUrl, sbKey);
+        await sb.from('orders').insert([{
+          token: orderDetails.token,
+          table_no: orderDetails.table,
+          items: orderDetails.items,
+          status: orderDetails.status || 'Pending'
+        }]);
+      }
     }
   } catch(e){}
 }

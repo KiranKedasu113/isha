@@ -1261,10 +1261,40 @@ let isFirstPollCompleted = false;
   }
 })();
 
-// Poll Cloud Store (api.restful-api.dev & ntfy.sh) Every 2 Seconds
+// Poll Cloud Stores (Supabase PostgreSQL, api.restful-api.dev & ntfy.sh) Every 2 Seconds
 async function pollCloudOrders(){
   const isInitial = !isFirstPollCompleted;
   isFirstPollCompleted = true;
+
+  // 0. Poll Supabase PostgreSQL Database (If Credentials Configured)
+  const sbUrl = localStorage.getItem('isha_cafe_supabase_url');
+  const sbKey = localStorage.getItem('isha_cafe_supabase_key');
+  if(sbUrl && sbKey){
+    try {
+      const cleanUrl = sbUrl.replace(/\/$/, '');
+      const res = await fetch(`${cleanUrl}/rest/v1/orders?select=*&order=created_at.desc`, {
+        headers: {
+          'apikey': sbKey,
+          'Authorization': `Bearer ${sbKey}`
+        }
+      });
+      if(res.ok){
+        const rows = await res.json();
+        if(Array.isArray(rows)){
+          rows.forEach(ord => {
+            processReceivedOrder({
+              id: ord.id,
+              token: ord.token,
+              table: ord.table_no,
+              items: ord.items,
+              status: ord.status,
+              time: new Date(ord.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12: true})
+            }, isInitial);
+          });
+        }
+      }
+    } catch(e){}
+  }
 
   // 1. Poll restful-api.dev global cloud store
   try {
