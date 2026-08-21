@@ -65,6 +65,7 @@ DROP POLICY IF EXISTS "Allow public update token counter" ON public.token_counte
 DROP POLICY IF EXISTS "Allow customer insert orders" ON public.orders;
 DROP POLICY IF EXISTS "Allow cashier read orders" ON public.orders;
 DROP POLICY IF EXISTS "Allow cashier update order status" ON public.orders;
+DROP POLICY IF EXISTS "Allow cashier delete orders" ON public.orders;
 
 -- POLICY 1: Customers can submit new orders via QR code scan
 CREATE POLICY "Allow customer insert orders" 
