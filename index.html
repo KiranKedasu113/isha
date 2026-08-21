@@ -1129,12 +1129,26 @@ function printBill(tokenOnly = false){
 
 /* ---------------- LIVE CROSS-DEVICE CUSTOMER ORDER LISTENER ---------------- */
 let pendingNotificationOrder = null;
-const processedCloudOrderIds = new Set();
 
-function processReceivedOrder(orderData){
+function getProcessedOrderIds(){
+  try {
+    return new Set(JSON.parse(localStorage.getItem('isha_cafe_processed_ids')) || []);
+  } catch(e){
+    return new Set();
+  }
+}
+
+function saveProcessedOrderId(id){
+  const set = getProcessedOrderIds();
+  set.add(id);
+  localStorage.setItem('isha_cafe_processed_ids', JSON.stringify([...set]));
+}
+
+function processReceivedOrder(orderData, isInitialPoll = false){
   if(!orderData || !orderData.token || !orderData.id) return;
-  if(processedCloudOrderIds.has(orderData.id)) return;
-  processedCloudOrderIds.add(orderData.id);
+  
+  const processedSet = getProcessedOrderIds();
+  const alreadyProcessed = processedSet.has(orderData.id);
 
   // 1. Save to Cashier localStorage Table Orders
   let tableOrders = [];
@@ -1142,18 +1156,22 @@ function processReceivedOrder(orderData){
     tableOrders = JSON.parse(localStorage.getItem('isha_cafe_table_orders')) || [];
   } catch(e){}
   
-  if(!tableOrders.some(o => (''+o.id) === (''+orderData.id) || (''+o.token) === (''+orderData.token))){
+  if(!tableOrders.some(o => (''+o.id) === (''+orderData.id))){
     tableOrders.unshift(orderData);
     localStorage.setItem('isha_cafe_table_orders', JSON.stringify(tableOrders));
   }
 
-  // 2. Play audio notification chime
-  playOrderChimeSound();
-
-  // 3. Show live notification popup banner & render view
-  showCustomerOrderNotification(orderData);
+  saveProcessedOrderId(orderData.id);
   renderTableOrdersView();
+
+  // 2. Only show popup and play chime IF this order was NOT previously processed AND NOT initial page refresh poll
+  if(!alreadyProcessed && !isInitialPoll){
+    playOrderChimeSound();
+    showCustomerOrderNotification(orderData);
+  }
 }
+
+let isFirstPollCompleted = false;
 
 // Real-time Cloud SSE Listener (ntfy.sh)
 (function initCloudOrderSSE(){
@@ -1164,7 +1182,7 @@ function processReceivedOrder(orderData){
         const payload = JSON.parse(e.data);
         if(payload && payload.message){
           const orderObj = JSON.parse(payload.message);
-          processReceivedOrder(orderObj);
+          processReceivedOrder(orderObj, false);
         }
       } catch(err){}
     };
@@ -1178,12 +1196,14 @@ async function pollCloudOrders(){
     if(res.ok){
       const text = await res.text();
       const lines = text.trim().split('\n');
+      const isInitial = !isFirstPollCompleted;
+      isFirstPollCompleted = true;
       lines.forEach(line => {
         try {
           const item = JSON.parse(line);
           if(item && item.message){
             const orderObj = JSON.parse(item.message);
-            processReceivedOrder(orderObj);
+            processReceivedOrder(orderObj, isInitial);
           }
         } catch(err){}
       });
