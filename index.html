@@ -1235,60 +1235,89 @@ function renderTableOrdersView(){
       <div style="grid-column:1/-1;text-align:center;padding:48px 20px;background:var(--bg-panel);border:1.5px solid var(--line);border-radius:16px;">
         <div style="font-size:36px;margin-bottom:8px;">📱</div>
         <div style="font-family:'Poppins',sans-serif;font-weight:700;font-size:16px;color:var(--cream);">No Scanned Table Orders Yet</div>
-        <div style="font-size:13px;color:var(--cream-dim);margin-top:4px;">When customers scan Table QRs on their phones and tap 'Confirm Order', their orders will show up here live!</div>
+        <div style="font-size:13px;color:var(--cream-dim);margin-top:4px;">When customers scan Table QRs on their mobile phones and place orders, their orders will appear here organized separately by Table Number!</div>
       </div>`;
     return;
   }
 
-  container.innerHTML = orders.map((ord) => {
-    const itemIds = Object.keys(ord.items || {});
-    let grandTotal = 0;
+  // Group orders separately by table number
+  const ordersByTable = {};
+  orders.forEach(ord => {
+    const tKey = ord.table ? `Table ${ord.table}` : 'Walk-in / General';
+    if(!ordersByTable[tKey]) ordersByTable[tKey] = [];
+    ordersByTable[tKey].push(ord);
+  });
 
-    const itemsHtml = itemIds.map(id => {
-      const m = MENU[id];
-      if(!m) return '';
-      const qty = ord.items[id];
-      const itemPrice = (parseInt(m.p)||0) * qty;
-      grandTotal += itemPrice;
-      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:13px;border-bottom:1px dashed rgba(255,255,255,0.06);">
-        <span><span class="item-code">${m.code}</span> <b>${m.n}</b> &times; ${qty}</span>
-        <span style="font-family:'Roboto Mono',monospace;color:var(--gold);font-weight:700;">₹${itemPrice}</span>
-      </div>`;
-    }).join('');
+  let html = '';
+  Object.keys(ordersByTable).forEach(tableTitle => {
+    const tableOrdersList = ordersByTable[tableTitle];
 
-    return `
-      <div style="background:var(--bg-panel);border:1.5px solid var(--line);border-radius:14px;padding:16px;box-shadow:var(--shadow);display:flex;flex-direction:column;justify-content:space-between;">
-        <div>
-          <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:10px;">
-            <div style="background:var(--gold);color:#1a1205;font-family:'Poppins',sans-serif;font-weight:900;font-size:12px;padding:4px 10px;border-radius:6px;">
-              TOKEN #${ord.token || '101'}
-            </div>
-            <div style="font-family:'Poppins',sans-serif;font-weight:800;font-size:15px;color:var(--cream);">
-              📍 Table ${ord.table || '1'}
-            </div>
-            <div style="font-size:11px;color:var(--cream-dim);font-weight:700;">
-              ${ord.time || ''}
-            </div>
-          </div>
-
-          <div style="margin-bottom:12px;">
-            ${itemsHtml}
-          </div>
+    html += `
+      <div class="table-group-section" style="grid-column:1/-1;margin-top:10px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;border-bottom:2px solid var(--gold);padding-bottom:6px;">
+          <h3 style="font-family:'Poppins',sans-serif;font-weight:800;font-size:18px;color:var(--gold);margin:0;display:flex;align-items:center;gap:6px;">
+            <span>📍</span> ${tableTitle}
+          </h3>
+          <span style="background:var(--gold);color:#1a1205;font-size:11px;font-weight:900;padding:2px 8px;border-radius:999px;">
+            ${tableOrdersList.length} Order${tableOrdersList.length > 1 ? 's' : ''}
+          </span>
         </div>
 
-        <div style="border-top:1.5px solid var(--line);padding-top:10px;margin-top:8px;">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-            <span style="font-size:13px;color:var(--cream-dim);font-weight:700;">Order Total:</span>
-            <span style="font-family:'Roboto Mono',monospace;font-weight:800;font-size:17px;color:var(--gold);">₹${grandTotal}</span>
-          </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:16px;">
+          ${tableOrdersList.map(ord => {
+            const itemIds = Object.keys(ord.items || {});
+            let grandTotal = 0;
 
-          <div style="display:flex;gap:8px;">
-            <button class="btn primary" style="flex:1;margin:0;padding:8px 10px;font-size:12px;" onclick="loadTableOrderToPOS('${ord.id}')">📥 Load & Print Bill</button>
-            <button class="btn ghost" style="margin:0;padding:8px 10px;font-size:12px;color:var(--red);border-color:var(--red);" onclick="deleteTableOrder('${ord.id}')">✕ Clear</button>
-          </div>
+            const itemsHtml = itemIds.map(id => {
+              const m = MENU[id];
+              if(!m) return '';
+              const qty = ord.items[id];
+              const itemPrice = (parseInt(m.p)||0) * qty;
+              grandTotal += itemPrice;
+              return `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:13px;border-bottom:1px dashed rgba(255,255,255,0.08);">
+                <span><span class="item-code">${m.code}</span> <b>${m.n}</b> &times; ${qty}</span>
+                <span style="font-family:'Roboto Mono',monospace;color:var(--gold);font-weight:700;">₹${itemPrice}</span>
+              </div>`;
+            }).join('');
+
+            return `
+              <div style="background:var(--bg-panel);border:1.5px solid var(--line);border-radius:14px;padding:16px;box-shadow:var(--shadow);display:flex;flex-direction:column;justify-content:space-between;">
+                <div>
+                  <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:10px;">
+                    <div style="background:var(--gold);color:#1a1205;font-family:'Poppins',sans-serif;font-weight:900;font-size:12px;padding:4px 10px;border-radius:6px;">
+                      TOKEN #${ord.token || '101'}
+                    </div>
+                    <div style="font-family:'Poppins',sans-serif;font-weight:800;font-size:14px;color:var(--cream);">
+                      📍 Table ${ord.table || '1'}
+                    </div>
+                    <div style="font-size:11px;color:var(--cream-dim);font-weight:700;">
+                      ⏰ ${ord.time || ''}
+                    </div>
+                  </div>
+
+                  <div style="margin-bottom:12px;">
+                    ${itemsHtml}
+                  </div>
+                </div>
+
+                <div style="border-top:1.5px solid var(--line);padding-top:10px;margin-top:8px;">
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                    <span style="font-size:13px;color:var(--cream-dim);font-weight:700;">Table Order Total:</span>
+                    <span style="font-family:'Roboto Mono',monospace;font-weight:800;font-size:17px;color:var(--gold);">₹${grandTotal}</span>
+                  </div>
+
+                  <div style="display:flex;gap:8px;">
+                    <button class="btn primary" style="flex:1;margin:0;padding:8px 10px;font-size:12px;" onclick="loadTableOrderToPOS('${ord.id}')">📥 Load & Print Bill</button>
+                    <button class="btn ghost" style="margin:0;padding:8px 10px;font-size:12px;color:var(--red);border-color:var(--red);" onclick="deleteTableOrder('${ord.id}')">✕ Clear</button>
+                  </div>
+                </div>
+              </div>`;
+          }).join('')}
         </div>
       </div>`;
-  }).join('');
+  });
+
+  container.innerHTML = html;
 }
 
 function loadTableOrderToPOS(orderId){
