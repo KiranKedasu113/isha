@@ -516,9 +516,10 @@
         </h2>
         <p style="color:var(--cream-dim);margin:0;font-size:13px;">Real-time customer orders placed via Table QR code mobile scans.</p>
       </div>
-      <div style="display:flex;gap:10px;">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn primary" style="width:auto;margin:0;padding:8px 14px;font-size:12px;" onclick="createDemoTableOrder('3')">🧪 Create Test Order</button>
         <button class="btn ghost" style="width:auto;margin:0;padding:8px 14px;font-size:12px;" onclick="renderTableOrdersView()">🔄 Refresh List</button>
-        <button class="btn ghost" style="width:auto;margin:0;padding:8px 14px;font-size:12px;color:var(--red);border-color:var(--red);" onclick="clearAllTableOrders()">🗑️ Clear All Orders</button>
+        <button class="btn ghost" style="width:auto;margin:0;padding:8px 14px;font-size:12px;color:var(--red);border-color:var(--red);" onclick="clearAllTableOrders()">🗑️ Clear All</button>
       </div>
     </div>
 
@@ -819,6 +820,9 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
     document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById('view-'+btn.dataset.tab).classList.add('active');
+    if(btn.dataset.tab === 'table-orders'){
+      renderTableOrdersView();
+    }
   };
 });
 
@@ -1371,6 +1375,27 @@ function clearAllTableOrders(){
     renderTableOrdersView();
     showToast(`All table orders cleared!`);
   }
+}
+
+function createDemoTableOrder(tableNo = '3'){
+  let lastToken = parseInt(localStorage.getItem('isha_cafe_last_token')) || 100;
+  const newToken = lastToken + 1;
+  localStorage.setItem('isha_cafe_last_token', newToken);
+
+  const demoOrd = {
+    id: Date.now() + '_' + Math.floor(Math.random()*1000),
+    token: newToken,
+    table: tableNo,
+    items: { "0": 2, "13": 1, "59": 1 },
+    status: 'Pending',
+    time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12: true})
+  };
+
+  let orders = getTableOrdersFromStorage();
+  orders.unshift(demoOrd);
+  localStorage.setItem('isha_cafe_table_orders', JSON.stringify(orders));
+  renderTableOrdersView();
+  showToast(`Created Test Order: Token #${newToken} (Table ${tableNo})`);
 }
 
 renderTableOrdersView();
