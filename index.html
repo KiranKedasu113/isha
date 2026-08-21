@@ -505,10 +505,9 @@
           <div class="row" id="tGstRow" style="display:none;"><span>GST (5%)</span><span id="tGst">₹0</span></div>
           <div class="row grand"><span>Total</span><span class="amt" id="tGrand">₹0</span></div>
         </div>
-        <div style="display:flex;gap:8px;margin-bottom:6px;">
-          <button class="btn primary" id="printBtn" style="flex:1;margin:0;padding:10px 8px;font-size:12px;" onclick="placeCashierOrder(true, 'bill')" disabled>🖨️ Cashier Bill (F9)</button>
-          <button class="btn primary" id="chefPrintBtn" style="flex:1;margin:0;padding:10px 8px;font-size:12px;background:#2e7d32;border-color:#2e7d32;" onclick="placeCashierOrder(true, 'chef')" disabled>👨‍🍳 Chef KOT</button>
-        </div>
+        <button class="btn primary" id="printBtn" style="width:100%;margin:0 0 8px 0;padding:12px 10px;font-size:14px;font-weight:900;background:linear-gradient(135deg, #d8a13a, #b88328);color:#1a1205;box-shadow:0 4px 14px rgba(216,161,58,0.35);border-radius:8px;" onclick="handleUnifiedSinglePrintClick()" disabled>
+          🖨️ Print Bill & Kitchen KOT (F9)
+        </button>
         <button class="btn ghost" onclick="clearCart()">Clear Order (F8)</button>
       </div>
     </div>
@@ -1102,9 +1101,10 @@ function renderCart(){
   if(gstLabel) gstLabel.textContent = `GST (${customGstRate}%)`;
   document.getElementById('tGst').textContent = '₹'+gst;
   document.getElementById('tGrand').textContent = '₹'+(sub+gst);
-  document.getElementById('printBtn').disabled = ids.length===0;
+  const printBtn = document.getElementById('printBtn');
+  if(printBtn) printBtn.disabled = ids.length === 0;
   const chefBtn = document.getElementById('chefPrintBtn');
-  if(chefBtn) chefBtn.disabled = ids.length===0;
+  if(chefBtn) chefBtn.disabled = ids.length === 0;
 }
 (function initGstState(){
   const defState = localStorage.getItem('isha_cafe_gst_default');
@@ -1114,6 +1114,18 @@ function renderCart(){
   }
 })();
 renderChips(); renderPickGrid(); renderCart();
+
+/* Single Button Dual Print Action (Bill + Kitchen KOT) */
+async function handleUnifiedSinglePrintClick(){
+  const ids = Object.keys(cart);
+  if(!ids.length) return;
+
+  if(window.qz && qz.websocket.isActive()){
+    await placeOrderAndDualPrintQZ();
+  } else {
+    await placeCashierOrder(true, 'both');
+  }
+}
 
 /* Global Hotkeys */
 document.addEventListener('keydown', (e) => {
@@ -1131,7 +1143,7 @@ document.addEventListener('keydown', (e) => {
     const billTabBtn = document.querySelector('.tab-btn[data-tab="bill"]');
     if (billTabBtn && billTabBtn.classList.contains('active')) {
       e.preventDefault();
-      placeCashierOrder(true);
+      handleUnifiedSinglePrintClick();
     }
   }
   if (e.key === 'F8') {
@@ -1292,6 +1304,18 @@ async function placeCashierOrder(shouldPrint = true, mode = 'bill'){
 
   const taxBillSec = document.getElementById('taxBillSection');
   const chefSec = document.getElementById('customerTokenSection');
+
+  if(mode === 'both'){
+    showToast(`Order Placed! Token #${tokenNo} (${name})`);
+    if(shouldPrint){
+      triggerSequentialAutoPrint(() => {
+        clearCart();
+      });
+    } else {
+      clearCart();
+    }
+    return;
+  }
 
   if(mode === 'chef'){
     if(taxBillSec) taxBillSec.style.display = 'none';
