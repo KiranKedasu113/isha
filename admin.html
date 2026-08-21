@@ -631,12 +631,6 @@ const DEFAULT_CAT_IMGS = {
 
 let currentMenu = [];
 
-function loadMenuData(){
-  const saved = localStorage.getItem('isha_cafe_menu') || localStorage.getItem('isha_cafe_custom_menu');
-  if(saved){
-    try {
-      const parsed = JSON.parse(saved);
-      if(Array.isArray(parsed) && parsed.length > 0){
 const DISH_IMGS = {
   // Irani & Teas
   "Irani Tea": "images/irani_tea.jpg",
