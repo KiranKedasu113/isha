@@ -477,7 +477,10 @@
           <div class="row" id="tGstRow" style="display:none;"><span>GST (5%)</span><span id="tGst">₹0</span></div>
           <div class="row grand"><span>Total</span><span class="amt" id="tGrand">₹0</span></div>
         </div>
-        <button class="btn primary" id="printBtn" onclick="placeCashierOrder(true)" disabled>🔔 Place Order & Print Bill (F9)</button>
+        <div style="display:flex;gap:8px;margin-bottom:6px;">
+          <button class="btn primary" id="printBtn" style="flex:1;margin:0;padding:10px 8px;font-size:12px;" onclick="placeCashierOrder(true, 'bill')" disabled>🖨️ Cashier Bill (F9)</button>
+          <button class="btn primary" id="chefPrintBtn" style="flex:1;margin:0;padding:10px 8px;font-size:12px;background:#2e7d32;border-color:#2e7d32;" onclick="placeCashierOrder(true, 'chef')" disabled>👨‍🍳 Chef KOT</button>
+        </div>
         <button class="btn ghost" onclick="clearCart()">Clear Order (F8)</button>
       </div>
     </div>
@@ -571,13 +574,8 @@
     <div style="text-align:center;font-size:11px;">Thank You! Come Again ♥</div>
   </div>
 
-  <!-- CUT SEPARATOR -->
-  <div class="cut-separator" style="margin:24px 0 16px;text-align:center;font-size:11px;font-weight:bold;border-top:1px dashed #000;padding-top:10px;">
-    ✂ - - - - - - - - - - CUT HERE FOR TOKEN SLIP - - - - - - - - - - ✂
-  </div>
-
-  <!-- SECTION 2: CHEF KITCHEN ORDER TICKET (KOT) SLIP — STRICTLY NO PRICES -->
-  <div class="receipt-section" id="customerTokenSection">
+  <!-- SECTION 2: CHEF KITCHEN ORDER TICKET (KOT) SLIP — STRICTLY NO PRICES (CHEF PRINTER) -->
+  <div class="receipt-section" id="customerTokenSection" style="display:none;">
     <h2 style="font-size:16px;text-align:center;margin:0 0 2px;">ISHA CAFE</h2>
     <div style="text-align:center;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;background:#000;color:#fff;padding:3px 6px;">*** CHEF KITCHEN ORDER TICKET (KOT) ***</div>
     
@@ -590,7 +588,7 @@
     <div id="rcTokenLines" style="font-size:13px;font-weight:bold;margin:6px 0;"></div>
     <hr style="border:none;border-top:1.5px dashed #000;margin:6px 0;">
     <div style="text-align:center;font-size:11px;font-weight:bold;margin-top:8px;">
-      👨‍🍳 CHEF / KITCHEN COPY — NO PRICES INCLUDED
+      👨‍🍳 CHEF KITCHEN COPY — NO PRICES INCLUDED
     </div>
   </div>
 </div>
@@ -999,8 +997,8 @@ function renderCart(){
   document.getElementById('tGst').textContent = '₹'+gst;
   document.getElementById('tGrand').textContent = '₹'+(sub+gst);
   document.getElementById('printBtn').disabled = ids.length===0;
-  const placeOnlyBtn = document.getElementById('placeOnlyBtn');
-  if(placeOnlyBtn) placeOnlyBtn.disabled = ids.length===0;
+  const chefBtn = document.getElementById('chefPrintBtn');
+  if(chefBtn) chefBtn.disabled = ids.length===0;
 }
 (function initGstState(){
   const defState = localStorage.getItem('isha_cafe_gst_default');
@@ -1105,7 +1103,7 @@ async function fetchGlobalNextToken(){
 }
 
 /* ---------------- CASHIER PLACE ORDER & PRINT ---------------- */
-async function placeCashierOrder(shouldPrint = true){
+async function placeCashierOrder(shouldPrint = true, mode = 'bill'){
   const ids = Object.keys(cart);
   if(!ids.length) return;
 
@@ -1132,7 +1130,7 @@ async function placeCashierOrder(shouldPrint = true){
   const total = sub+gst;
   const now = new Date();
 
-  // Section 1: Customer Tax Invoice
+  // Section 1: Customer Tax Invoice (Cashier Printer)
   document.getElementById('rcMeta').innerHTML =
     `<div class="rc-line" style="font-size:12px;font-weight:700;">
        <span>Order: ${name}</span>
@@ -1152,20 +1150,36 @@ async function placeCashierOrder(shouldPrint = true){
   totalsHtml += `<div class="rc-line rc-grand"><span>TOTAL</span><span>₹${total}</span></div>`;
   document.getElementById('rcTotals').innerHTML = totalsHtml;
 
-  // Section 2: Separate Customer Token Slip
+  // Section 2: Chef KOT Slip (Chef Printer — STRICTLY NO PRICES)
   document.getElementById('rcTokenMeta').innerHTML =
     `<div class="rc-line"><span>Order / Table: ${name}</span><span>${now.toLocaleDateString()} ${now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</span></div>`;
 
   document.getElementById('rcTokenLines').innerHTML = ids.map(id=>{
     const m=MENU[id], qty=cart[id];
-    return `<div class="rc-line" style="padding:2px 0;"><span><span class="item-code">${m.code}</span> ${m.n}</span><span>x ${qty}</span></div>`;
+    return `<div class="rc-line" style="padding:4px 0;font-size:13px;border-bottom:1px dashed #ccc;"><span><span class="item-code">[${m.code}]</span> <b>${m.n}</b></span><span style="font-weight:900;font-size:14px;">&times; ${qty}</span></div>`;
   }).join('');
+
+  const taxBillSec = document.getElementById('taxBillSection');
+  const chefSec = document.getElementById('customerTokenSection');
+
+  if(mode === 'chef'){
+    if(taxBillSec) taxBillSec.style.display = 'none';
+    if(chefSec) chefSec.style.display = 'block';
+  } else {
+    // 'bill' mode (Cashier Printer): Prints Cashier Tax Bill ONLY!
+    if(taxBillSec) taxBillSec.style.display = 'block';
+    if(chefSec) chefSec.style.display = 'none';
+  }
 
   showToast(`Order Placed! Token #${tokenNo} (${name})`);
 
   if(shouldPrint){
     window.print();
   }
+
+  // Restore defaults
+  if(taxBillSec) taxBillSec.style.display = 'block';
+  if(chefSec) chefSec.style.display = 'none';
 
   // Clear cart after placing order
   clearCart();
@@ -1646,29 +1660,22 @@ function directPrintTableOrder(orderId, mode = 'both'){
   }).join('');
 
   const taxBillSec = document.getElementById('taxBillSection');
-  const cutSep = document.querySelector('.cut-separator');
   const chefSec = document.getElementById('customerTokenSection');
 
   if(mode === 'chef'){
     if(taxBillSec) taxBillSec.style.display = 'none';
-    if(cutSep) cutSep.style.display = 'none';
     if(chefSec) chefSec.style.display = 'block';
-  } else if(mode === 'bill'){
-    if(taxBillSec) taxBillSec.style.display = 'block';
-    if(cutSep) cutSep.style.display = 'none';
-    if(chefSec) chefSec.style.display = 'none';
   } else {
+    // Default: 'bill' mode (Cashier Printer): Prints Cashier Tax Bill ONLY!
     if(taxBillSec) taxBillSec.style.display = 'block';
-    if(cutSep) cutSep.style.display = 'block';
-    if(chefSec) chefSec.style.display = 'block';
+    if(chefSec) chefSec.style.display = 'none';
   }
 
   window.print();
 
-  // Restore visibility
+  // Restore defaults
   if(taxBillSec) taxBillSec.style.display = 'block';
-  if(cutSep) cutSep.style.display = 'block';
-  if(chefSec) chefSec.style.display = 'block';
+  if(chefSec) chefSec.style.display = 'none';
 
   // Mark as Printed and move to printed list
   target.status = 'Printed';
