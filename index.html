@@ -517,8 +517,9 @@
         <p style="color:var(--cream-dim);margin:0;font-size:13px;">Real-time customer orders placed via Table QR code mobile scans.</p>
       </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;">
-        <button class="btn primary" style="width:auto;margin:0;padding:8px 14px;font-size:12px;" onclick="createDemoTableOrder('3')">🧪 Create Test Order</button>
-        <button class="btn ghost" style="width:auto;margin:0;padding:8px 14px;font-size:12px;" onclick="renderTableOrdersView()">🔄 Refresh List</button>
+        <button class="btn primary" style="width:auto;margin:0;padding:8px 14px;font-size:12px;background:var(--gold);color:#1a1205;" onclick="printAllPendingOrders()">🖨️ Print All Pending</button>
+        <button class="btn ghost" style="width:auto;margin:0;padding:8px 14px;font-size:12px;" onclick="createDemoTableOrder('3')">🧪 Create Test Order</button>
+        <button class="btn ghost" style="width:auto;margin:0;padding:8px 14px;font-size:12px;" onclick="renderTableOrdersView()">🔄 Refresh</button>
         <button class="btn ghost" style="width:auto;margin:0;padding:8px 14px;font-size:12px;color:var(--red);border-color:var(--red);" onclick="clearAllTableOrders()">🗑️ Clear All</button>
       </div>
     </div>
@@ -1328,11 +1329,13 @@ function renderTableOrdersView(){
   const container = document.getElementById('tableOrdersList');
   if(!container) return;
   const orders = getTableOrdersFromStorage();
+  const pendingOrders = orders.filter(o => o.status !== 'Printed');
+  const printedOrders = orders.filter(o => o.status === 'Printed');
   const badge = document.getElementById('ordersBadgeCount');
 
   if(badge){
-    if(orders.length > 0){
-      badge.textContent = orders.length;
+    if(pendingOrders.length > 0){
+      badge.textContent = pendingOrders.length;
       badge.style.display = 'inline-block';
     } else {
       badge.style.display = 'none';
@@ -1344,89 +1347,191 @@ function renderTableOrdersView(){
       <div style="grid-column:1/-1;text-align:center;padding:48px 20px;background:var(--bg-panel);border:1.5px solid var(--line);border-radius:16px;">
         <div style="font-size:36px;margin-bottom:8px;">📱</div>
         <div style="font-family:'Poppins',sans-serif;font-weight:700;font-size:16px;color:var(--cream);">No Scanned Table Orders Yet</div>
-        <div style="font-size:13px;color:var(--cream-dim);margin-top:4px;">When customers scan Table QRs on their mobile phones and place orders, their orders will appear here organized separately by Table Number!</div>
+        <div style="font-size:13px;color:var(--cream-dim);margin-top:4px;">When customers scan Table QRs on their mobile phones and place orders, their orders will appear here!</div>
       </div>`;
     return;
   }
 
-  // Group orders separately by table number
-  const ordersByTable = {};
-  orders.forEach(ord => {
-    const tKey = ord.table ? `Table ${ord.table}` : 'Walk-in / General';
-    if(!ordersByTable[tKey]) ordersByTable[tKey] = [];
-    ordersByTable[tKey].push(ord);
-  });
-
   let html = '';
-  Object.keys(ordersByTable).forEach(tableTitle => {
-    const tableOrdersList = ordersByTable[tableTitle];
 
+  // 1. RENDER PENDING ORDERS (Grouped by Table)
+  if(pendingOrders.length > 0){
+    const pendingByTable = {};
+    pendingOrders.forEach(ord => {
+      const tKey = ord.table ? `Table ${ord.table}` : 'Walk-in / General';
+      if(!pendingByTable[tKey]) pendingByTable[tKey] = [];
+      pendingByTable[tKey].push(ord);
+    });
+
+    Object.keys(pendingByTable).forEach(tableTitle => {
+      const list = pendingByTable[tableTitle];
+      html += `
+        <div class="table-group-section" style="grid-column:1/-1;margin-top:10px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;border-bottom:2px solid var(--gold);padding-bottom:6px;">
+            <h3 style="font-family:'Poppins',sans-serif;font-weight:800;font-size:18px;color:var(--gold);margin:0;display:flex;align-items:center;gap:6px;">
+              <span>🟡</span> ${tableTitle} &middot; Pending (${list.length})
+            </h3>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:16px;">
+            ${list.map(ord => renderSingleOrderCard(ord, false)).join('')}
+          </div>
+        </div>`;
+    });
+  }
+
+  // 2. RENDER PRINTED / COMPLETED ORDERS
+  if(printedOrders.length > 0){
     html += `
-      <div class="table-group-section" style="grid-column:1/-1;margin-top:10px;">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;border-bottom:2px solid var(--gold);padding-bottom:6px;">
-          <h3 style="font-family:'Poppins',sans-serif;font-weight:800;font-size:18px;color:var(--gold);margin:0;display:flex;align-items:center;gap:6px;">
-            <span>📍</span> ${tableTitle}
+      <div class="printed-group-section" style="grid-column:1/-1;margin-top:30px;padding-top:20px;border-top:2px dashed var(--line);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <h3 style="font-family:'Poppins',sans-serif;font-weight:800;font-size:17px;color:var(--green);margin:0;display:flex;align-items:center;gap:8px;">
+            <span>✅</span> Printed / Completed Orders (${printedOrders.length})
           </h3>
-          <span style="background:var(--gold);color:#1a1205;font-size:11px;font-weight:900;padding:2px 8px;border-radius:999px;">
-            ${tableOrdersList.length} Order${tableOrdersList.length > 1 ? 's' : ''}
-          </span>
+          <button class="btn ghost" style="width:auto;margin:0;padding:4px 10px;font-size:11px;color:var(--cream-dim);" onclick="clearPrintedTableOrders()">Clear Printed History</button>
         </div>
 
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:16px;">
-          ${tableOrdersList.map(ord => {
-            const itemIds = Object.keys(ord.items || {});
-            let grandTotal = 0;
-
-            const itemsHtml = itemIds.map(id => {
-              const m = MENU[id];
-              if(!m) return '';
-              const qty = ord.items[id];
-              const itemPrice = (parseInt(m.p)||0) * qty;
-              grandTotal += itemPrice;
-              return `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:13px;border-bottom:1px dashed rgba(255,255,255,0.08);">
-                <span><span class="item-code">${m.code}</span> <b>${m.n}</b> &times; ${qty}</span>
-                <span style="font-family:'Roboto Mono',monospace;color:var(--gold);font-weight:700;">₹${itemPrice}</span>
-              </div>`;
-            }).join('');
-
-            return `
-              <div style="background:var(--bg-panel);border:1.5px solid var(--line);border-radius:14px;padding:16px;box-shadow:var(--shadow);display:flex;flex-direction:column;justify-content:space-between;">
-                <div>
-                  <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:10px;">
-                    <div style="background:var(--gold);color:#1a1205;font-family:'Poppins',sans-serif;font-weight:900;font-size:12px;padding:4px 10px;border-radius:6px;">
-                      TOKEN #${ord.token || '101'}
-                    </div>
-                    <div style="font-family:'Poppins',sans-serif;font-weight:800;font-size:14px;color:var(--cream);">
-                      📍 Table ${ord.table || '1'}
-                    </div>
-                    <div style="font-size:11px;color:var(--cream-dim);font-weight:700;">
-                      ⏰ ${ord.time || ''}
-                    </div>
-                  </div>
-
-                  <div style="margin-bottom:12px;">
-                    ${itemsHtml}
-                  </div>
-                </div>
-
-                <div style="border-top:1.5px solid var(--line);padding-top:10px;margin-top:8px;">
-                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-                    <span style="font-size:13px;color:var(--cream-dim);font-weight:700;">Table Order Total:</span>
-                    <span style="font-family:'Roboto Mono',monospace;font-weight:800;font-size:17px;color:var(--gold);">₹${grandTotal}</span>
-                  </div>
-
-                  <div style="display:flex;gap:8px;">
-                    <button class="btn primary" style="flex:1;margin:0;padding:8px 10px;font-size:12px;" onclick="loadTableOrderToPOS('${ord.id}')">📥 Load & Print Bill</button>
-                    <button class="btn ghost" style="margin:0;padding:8px 10px;font-size:12px;color:var(--red);border-color:var(--red);" onclick="deleteTableOrder('${ord.id}')">✕ Clear</button>
-                  </div>
-                </div>
-              </div>`;
-          }).join('')}
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:16px;opacity:0.85;">
+          ${printedOrders.map(ord => renderSingleOrderCard(ord, true)).join('')}
         </div>
       </div>`;
-  });
+  }
 
   container.innerHTML = html;
+}
+
+function renderSingleOrderCard(ord, isPrinted){
+  const itemIds = Object.keys(ord.items || {});
+  let grandTotal = 0;
+
+  const itemsHtml = itemIds.map(id => {
+    const m = MENU[id];
+    if(!m) return '';
+    const qty = ord.items[id];
+    const itemPrice = (parseInt(m.p)||0) * qty;
+    grandTotal += itemPrice;
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:13px;border-bottom:1px dashed rgba(255,255,255,0.08);">
+      <span><span class="item-code">${m.code}</span> <b>${m.n}</b> &times; ${qty}</span>
+      <span style="font-family:'Roboto Mono',monospace;color:var(--gold);font-weight:700;">₹${itemPrice}</span>
+    </div>`;
+  }).join('');
+
+  return `
+    <div style="background:var(--bg-panel);border:1.5px solid ${isPrinted ? 'var(--green)' : 'var(--line)'};border-radius:14px;padding:16px;box-shadow:var(--shadow);display:flex;flex-direction:column;justify-content:space-between;">
+      <div>
+        <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:10px;">
+          <div style="background:${isPrinted ? 'var(--green)' : 'var(--gold)'};color:#1a1205;font-family:'Poppins',sans-serif;font-weight:900;font-size:12px;padding:4px 10px;border-radius:6px;">
+            TOKEN #${ord.token || '101'}
+          </div>
+          <div style="font-family:'Poppins',sans-serif;font-weight:800;font-size:14px;color:var(--cream);">
+            📍 Table ${ord.table || '1'}
+          </div>
+          <div style="font-size:11px;color:${isPrinted ? 'var(--green)' : 'var(--cream-dim)'};font-weight:700;">
+            ${isPrinted ? '✅ Printed' : '⏰ ' + (ord.time || '')}
+          </div>
+        </div>
+
+        <div style="margin-bottom:12px;">
+          ${itemsHtml}
+        </div>
+      </div>
+
+      <div style="border-top:1.5px solid var(--line);padding-top:10px;margin-top:8px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <span style="font-size:13px;color:var(--cream-dim);font-weight:700;">Order Total:</span>
+          <span style="font-family:'Roboto Mono',monospace;font-weight:800;font-size:17px;color:var(--gold);">₹${grandTotal}</span>
+        </div>
+
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="btn primary" style="flex:1;margin:0;padding:8px 8px;font-size:12px;" onclick="directPrintTableOrder('${ord.id}')">${isPrinted ? '🖨️ Re-Print' : '🖨️ Print Bill'}</button>
+          ${!isPrinted ? `<button class="btn ghost" style="margin:0;padding:8px 8px;font-size:12px;" onclick="loadTableOrderToPOS('${ord.id}')">📥 Load</button>` : ''}
+          <button class="btn ghost" style="margin:0;padding:8px 8px;font-size:12px;color:var(--red);border-color:var(--red);" onclick="deleteTableOrder('${ord.id}')">✕ Clear</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function directPrintTableOrder(orderId){
+  const orders = getTableOrdersFromStorage();
+  const target = orders.find(o => (''+o.id) === (''+orderId));
+  if(!target) return;
+
+  const itemIds = Object.keys(target.items || {});
+  if(!itemIds.length) return;
+
+  const name = `Table ${target.table}`;
+  const tokenNo = target.token;
+  const gstOn = document.getElementById('gstToggle')?.checked || false;
+  const customGstRate = parseFloat(localStorage.getItem('isha_cafe_gst_rate')) || 5;
+
+  const sub = itemIds.reduce((s, id) => {
+    const m = MENU[id];
+    return s + (m ? (parseInt(m.p)||0)*target.items[id] : 0);
+  }, 0);
+  const gst = gstOn ? Math.round(sub * (customGstRate / 100)) : 0;
+  const total = sub + gst;
+  const now = new Date();
+
+  // Populate Printable Receipt Spans
+  const posTokenSpan = document.getElementById('posTokenNum');
+  if(posTokenSpan) posTokenSpan.textContent = tokenNo;
+  const rcTokenSpan = document.getElementById('rcTokenNum');
+  if(rcTokenSpan) rcTokenSpan.textContent = tokenNo;
+  const rcTokenSlipSpan = document.getElementById('rcTokenSlipNum');
+  if(rcTokenSlipSpan) rcTokenSlipSpan.textContent = tokenNo;
+
+  document.getElementById('rcMeta').innerHTML =
+    `<div class="rc-line" style="font-size:12px;font-weight:700;">
+       <span>Order: ${name}</span>
+     </div>
+     <div class="rc-line" style="font-size:11px;">
+       <span>Date: ${now.toLocaleDateString()}</span>
+       <span>Time: ${now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</span>
+     </div>`;
+
+  document.getElementById('rcLines').innerHTML = itemIds.map(id => {
+    const m = MENU[id], qty = target.items[id];
+    return `<div class="rc-line"><span>${m.n} x${qty}</span><span>₹${m.p*qty}</span></div>`;
+  }).join('');
+
+  let totalsHtml = `<div class="rc-line"><span>Subtotal</span><span>₹${sub}</span></div>`;
+  if(gstOn) totalsHtml += `<div class="rc-line"><span>GST (${customGstRate}%)</span><span>₹${gst}</span></div>`;
+  totalsHtml += `<div class="rc-line rc-grand"><span>TOTAL</span><span>₹${total}</span></div>`;
+  document.getElementById('rcTotals').innerHTML = totalsHtml;
+
+  document.getElementById('rcTokenMeta').innerHTML =
+    `<div class="rc-line"><span>Order / Table: ${name}</span><span>${now.toLocaleDateString()} ${now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</span></div>`;
+
+  document.getElementById('rcTokenLines').innerHTML = itemIds.map(id => {
+    const m = MENU[id], qty = target.items[id];
+    return `<div class="rc-line" style="padding:2px 0;"><span><span class="item-code">${m.code}</span> ${m.n}</span><span>x ${qty}</span></div>`;
+  }).join('');
+
+  window.print();
+
+  // Mark as Printed and move to printed list
+  target.status = 'Printed';
+  localStorage.setItem('isha_cafe_table_orders', JSON.stringify(orders));
+  renderTableOrdersView();
+
+  showToast(`🖨️ Printed Token #${tokenNo} (${name}) — Moved to Printed List!`);
+}
+
+function printAllPendingOrders(){
+  const orders = getTableOrdersFromStorage();
+  const pending = orders.filter(o => o.status !== 'Printed');
+  if(!pending.length){
+    showToast('No pending orders to print!');
+    return;
+  }
+
+  // Direct print the first pending order and mark all as printed
+  directPrintTableOrder(pending[0].id);
+
+  // Mark remaining pending orders as printed
+  pending.forEach(o => o.status = 'Printed');
+  localStorage.setItem('isha_cafe_table_orders', JSON.stringify(orders));
+  renderTableOrdersView();
 }
 
 function loadTableOrderToPOS(orderId){
@@ -1472,6 +1577,14 @@ function deleteTableOrder(orderId){
   localStorage.setItem('isha_cafe_table_orders', JSON.stringify(orders));
   renderTableOrdersView();
   showToast(`Order cleared!`);
+}
+
+function clearPrintedTableOrders(){
+  let orders = getTableOrdersFromStorage();
+  orders = orders.filter(o => o.status !== 'Printed');
+  localStorage.setItem('isha_cafe_table_orders', JSON.stringify(orders));
+  renderTableOrdersView();
+  showToast(`Printed orders cleared!`);
 }
 
 function clearAllTableOrders(){
