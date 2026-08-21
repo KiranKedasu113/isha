@@ -480,11 +480,8 @@
           <div class="row" id="tGstRow" style="display:none;"><span>GST (5%)</span><span id="tGst">₹0</span></div>
           <div class="row grand"><span>Total</span><span class="amt" id="tGrand">₹0</span></div>
         </div>
-        <div style="display:flex;gap:8px;margin-bottom:6px;">
-          <button class="btn primary" id="printBtn" style="flex:1;margin:0;padding:10px 8px;font-size:12px;" onclick="placeCashierOrder(true, 'bill')" disabled>🖨️ Cashier Bill (F9)</button>
-          <button class="btn primary" id="chefPrintBtn" style="flex:1;margin:0;padding:10px 8px;font-size:12px;background:#2e7d32;border-color:#2e7d32;" onclick="placeCashierOrder(true, 'chef')" disabled>👨‍🍳 Chef KOT</button>
-        </div>
-        <button class="btn ghost" onclick="clearCart()">Clear Order (F8)</button>
+        <button class="btn primary" id="printBtn" onclick="placeCashierOrder(true)" disabled>🖨️ Place Order & Print Bill (F9)</button>
+        <button class="btn ghost" onclick="clearCart()" style="margin-top:6px;">Clear Order (F8)</button>
       </div>
     </div>
   </section>
@@ -577,8 +574,13 @@
     <div style="text-align:center;font-size:11px;">Thank You! Come Again ♥</div>
   </div>
 
-  <!-- SECTION 2: CHEF KITCHEN ORDER TICKET (KOT) SLIP — STRICTLY NO PRICES (CHEF PRINTER) -->
-  <div class="receipt-section" id="customerTokenSection" style="display:none;">
+  <!-- CUT SEPARATOR -->
+  <div class="cut-separator" style="margin:20px 0 16px;text-align:center;font-size:11px;font-weight:bold;border-top:1px dashed #000;padding-top:10px;">
+    ✂ - - - CUT HERE FOR CHEF KOT SLIP - - - ✂
+  </div>
+
+  <!-- SECTION 2: CHEF KITCHEN ORDER TICKET (KOT) SLIP — STRICTLY NO PRICES -->
+  <div class="receipt-section" id="customerTokenSection">
     <h2 style="font-size:16px;text-align:center;margin:0 0 2px;">ISHA CAFE</h2>
     <div style="text-align:center;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;background:#000;color:#fff;padding:3px 6px;">*** CHEF KITCHEN ORDER TICKET (KOT) ***</div>
     
@@ -1105,31 +1107,6 @@ async function fetchGlobalNextToken(){
   return nextToken;
 }
 
-function triggerSequentialAutoPrint(onComplete){
-  const taxBillSec = document.getElementById('taxBillSection');
-  const chefSec = document.getElementById('customerTokenSection');
-
-  // Step 1: Print Cashier Tax Bill (Prices Included) -> Sent to Cashier Printer
-  if(taxBillSec) taxBillSec.style.display = 'block';
-  if(chefSec) chefSec.style.display = 'none';
-
-  window.print();
-
-  // Step 2: Automatically Trigger Chef KOT Ticket (0 Prices) -> Sent to Chef Printer
-  setTimeout(() => {
-    if(taxBillSec) taxBillSec.style.display = 'none';
-    if(chefSec) chefSec.style.display = 'block';
-
-    window.print();
-
-    // Restore defaults
-    if(taxBillSec) taxBillSec.style.display = 'block';
-    if(chefSec) chefSec.style.display = 'none';
-
-    if(typeof onComplete === 'function') onComplete();
-  }, 400);
-}
-
 /* ---------------- CASHIER PLACE ORDER & PRINT ---------------- */
 async function placeCashierOrder(shouldPrint = true, mode = 'bill'){
   const ids = Object.keys(cart);
@@ -1620,17 +1597,18 @@ function renderSingleOrderCard(ord, isPrinted){
           <span style="font-family:'Roboto Mono',monospace;font-weight:800;font-size:17px;color:var(--gold);">₹${grandTotal}</span>
         </div>
 
-        <div style="display:flex;gap:6px;flex-wrap:wrap;">
-          <button class="btn primary" style="flex:1;margin:0;padding:8px 6px;font-size:12px;background:var(--gold);color:#1a1205;" onclick="directPrintTableOrder('${ord.id}', 'bill')">${isPrinted ? '🖨️ Re-Print' : '🖨️ Full Bill'}</button>
-          <button class="btn primary" style="flex:1;margin:0;padding:8px 6px;font-size:12px;background:#2e7d32;color:#fff;border-color:#2e7d32;" onclick="directPrintTableOrder('${ord.id}', 'chef')">👨‍🍳 Chef KOT</button>
-          ${!isPrinted ? `<button class="btn ghost" style="margin:0;padding:8px 6px;font-size:12px;" onclick="loadTableOrderToPOS('${ord.id}')">📥 Load</button>` : ''}
-          <button class="btn ghost" style="margin:0;padding:8px 6px;font-size:12px;color:var(--red);border-color:var(--red);" onclick="deleteTableOrder('${ord.id}')">✕ Clear</button>
-        </div>
-      </div>
-    </div>`;
+  showToast(`Order Placed! Token #${tokenNo} (${name})`);
+
+  if(shouldPrint){
+    window.print();
+  }
+
+  // Clear cart after placing order
+  clearCart();
 }
 
-function directPrintTableOrder(orderId, mode = 'both'){
+/* ---------------- TABLE ORDERS PRINT ---------------- */
+function directPrintTableOrder(orderId){
   const orders = getTableOrdersFromStorage();
   const target = orders.find(o => (''+o.id) === (''+orderId));
   if(!target) return;
@@ -1687,7 +1665,7 @@ function directPrintTableOrder(orderId, mode = 'both'){
     return `<div class="rc-line" style="padding:4px 0;font-size:13px;border-bottom:1px dashed #ccc;"><span><span class="item-code">[${m.code}]</span> <b>${m.n}</b></span><span style="font-weight:900;font-size:14px;">&times; ${qty}</span></div>`;
   }).join('');
 
-  triggerSequentialAutoPrint();
+  window.print();
 
   // Mark as Printed and move to printed list
   target.status = 'Printed';
