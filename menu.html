@@ -793,12 +793,22 @@ const DISH_IMGS = {
   "Chicken Wings Fried Rice (Full)": "images/chicken_wings_fried_rice.jpg",
   "Chilly Chicken": "https://images.unsplash.com/photo-1610057099443-fde8c4d50f91?w=400&auto=format&fit=crop&q=80",
   "Chicken Lollipop Fried Rice (Half)": "https://images.unsplash.com/photo-1608039829572-78524f79c4c7?w=400&auto=format&fit=crop&q=80",
-  "Chicken Lollipop Fried Rice (Full)": "https://images.unsplash.com/photo-1562967914-608f82629710?w=400&auto=format&fit=crop&q=80"
+  "Chicken Lollipop Fried Rice (Full)": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&auto=format&fit=crop&q=80"
 };
+
+const CURRENT_MENU_VER = "2026_08_22_v5";
 
 function getDishImage(dishName, catName, customImg) {
   if (customImg && typeof customImg === 'string' && customImg.trim() !== '') {
-    return customImg.trim();
+    const u = customImg.trim();
+    // Filter out known old stale URLs from prior cached builds
+    const isStale = u.includes('photo-1573140247632') || 
+                    u.includes('photo-1589301760014') || 
+                    u.includes('photo-1626777552726') || 
+                    u.includes('photo-1587888637140');
+    if (!isStale) {
+      return u;
+    }
   }
   if (!dishName) return DEFAULT_CAT_IMGS[catName] || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&auto=format&fit=crop&q=80';
   const cleanName = dishName.trim();
@@ -825,7 +835,7 @@ function getDishImage(dishName, catName, customImg) {
   if (lower.includes('corn samosa')) return 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=400&auto=format&fit=crop&q=80';
   if (lower.includes('paneer samosa')) return 'https://images.unsplash.com/photo-1601050690187-013175c2e391?w=400&auto=format&fit=crop&q=80';
   if (lower.includes('samosa')) return 'images/samosa.jpg';
-  if (lower.includes('kachori')) return 'https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?w=400&auto=format&fit=crop&q=80';
+  if (lower.includes('kachori')) return 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=400&auto=format&fit=crop&q=80';
   if (lower.includes('garlic bread')) return 'https://assets-jpcust.jwpsrv.com/thumbnails/5ybpabzh-720.jpg';
   if (lower.includes('bun') || lower.includes('maska')) return 'images/bun_maska.jpg';
   if (lower.includes('mango lassi')) return 'images/mango_lassi.jpg';

@@ -1071,9 +1071,19 @@ const DISH_IMGS = {
   "Chicken Lollipop Fried Rice (Full)": "https://images.unsplash.com/photo-1562967914-608f82629710?w=400&auto=format&fit=crop&q=80"
 };
 
+const CURRENT_MENU_VER = "2026_08_22_v5";
+
 function getDishImage(dishName, catName, customImg) {
   if (customImg && typeof customImg === 'string' && customImg.trim() !== '') {
-    return customImg.trim();
+    const u = customImg.trim();
+    // Filter out known old stale URLs from prior cached builds
+    const isStale = u.includes('photo-1573140247632') || 
+                    u.includes('photo-1589301760014') || 
+                    u.includes('photo-1626777552726') || 
+                    u.includes('photo-1587888637140');
+    if (!isStale) {
+      return u;
+    }
   }
   if (!dishName) return DEFAULT_CAT_IMGS[catName] || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&auto=format&fit=crop&q=80';
   const cleanName = dishName.trim();
@@ -1091,16 +1101,16 @@ function getDishImage(dishName, catName, customImg) {
   if (lower.includes('lollipop') && (lower.includes('rice') || lower.includes('fried'))) return 'https://images.unsplash.com/photo-1608039829572-78524f79c4c7?w=400&auto=format&fit=crop&q=80';
   if (lower.includes('mushroom') && (lower.includes('rice') || lower.includes('fried'))) return 'https://images.unsplash.com/photo-1603105037880-880cd4edfb5d?w=400&auto=format&fit=crop&q=80';
   if (lower.includes('egg') && (lower.includes('rice') || lower.includes('fried'))) return 'https://images.unsplash.com/photo-1512058564366-18510be2db19?w=400&auto=format&fit=crop&q=80';
-  if (lower.includes('chicken') && (lower.includes('rice') || lower.includes('fried'))) return 'https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=400&auto=format&fit=crop&q=80';
+  if (lower.includes('chicken') && (lower.includes('rice') || lower.includes('fried'))) return 'https://images.unsplash.com/photo-1603105037880-880cd4edfb5d?w=400&auto=format&fit=crop&q=80';
   if (lower.includes('fried rice') || lower.includes('rice')) return 'images/fried_rice.jpg';
   if (lower.includes('momo')) return 'images/momo.jpg';
   if (lower.includes('egg puff')) return 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400&auto=format&fit=crop&q=80';
   if (lower.includes('chicken puff')) return 'https://images.unsplash.com/photo-1626082929543-5bab0f096c46?w=400&auto=format&fit=crop&q=80';
   if (lower.includes('veg puff') || lower.includes('puff')) return 'https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=400&auto=format&fit=crop&q=80';
-  if (lower.includes('corn samosa')) return 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=400&auto=format&fit=crop&q=80';
-  if (lower.includes('paneer samosa')) return 'https://images.unsplash.com/photo-1601050690187-013175c2e391?w=400&auto=format&fit=crop&q=80';
+  if (lower.includes('corn samosa')) return 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=400&auto=format&fit=crop&q=80';
+  if (lower.includes('paneer samosa')) return 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=400&auto=format&fit=crop&q=80';
   if (lower.includes('samosa')) return 'images/samosa.jpg';
-  if (lower.includes('kachori')) return 'https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?w=400&auto=format&fit=crop&q=80';
+  if (lower.includes('kachori')) return 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=400&auto=format&fit=crop&q=80';
   if (lower.includes('garlic bread')) return 'https://assets-jpcust.jwpsrv.com/thumbnails/5ybpabzh-720.jpg';
   if (lower.includes('bun') || lower.includes('maska')) return 'images/bun_maska.jpg';
   if (lower.includes('mango lassi')) return 'images/mango_lassi.jpg';
@@ -1119,6 +1129,13 @@ function getDishImage(dishName, catName, customImg) {
   if (lower.includes('tea') || lower.includes('chai')) return 'images/irani_tea.jpg';
 
   return DEFAULT_CAT_IMGS[catName] || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&auto=format&fit=crop&q=80';
+}
+
+const savedVer = localStorage.getItem('isha_cafe_menu_ver');
+if (savedVer !== CURRENT_MENU_VER) {
+  localStorage.removeItem('isha_cafe_menu');
+  localStorage.removeItem('isha_cafe_custom_menu');
+  localStorage.setItem('isha_cafe_menu_ver', CURRENT_MENU_VER);
 }
 
 const savedCustomMenu = localStorage.getItem('isha_cafe_menu');
