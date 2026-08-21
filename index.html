@@ -1072,7 +1072,10 @@ const DISH_IMGS = {
   "Chicken Lollipop Fried Rice (Full)": "https://images.unsplash.com/photo-1562967914-608f82629710?w=400&auto=format&fit=crop&q=80"
 };
 
-function getDishImage(dishName, catName) {
+function getDishImage(dishName, catName, customImg) {
+  if (customImg && typeof customImg === 'string' && customImg.trim() !== '') {
+    return customImg.trim();
+  }
   if (!dishName) return DEFAULT_CAT_IMGS[catName] || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&auto=format&fit=crop&q=80';
   const cleanName = dishName.trim();
   if (DISH_IMGS[cleanName]) return DISH_IMGS[cleanName];
@@ -1125,7 +1128,29 @@ if (savedCustomMenu) {
 MENU.forEach((m,i)=>{
   m.id = i;
   m.code = (m.code !== undefined && m.code !== null && m.code !== '') ? m.code : (i + 1);
-  m.img = getDishImage(m.n, m.c);
+  m.img = getDishImage(m.n, m.c, m.img);
+});
+
+// Real-time synchronization when admin updates menu
+window.addEventListener('storage', (e) => {
+  if (e.key === 'isha_cafe_menu' || e.key === 'isha_cafe_custom_menu') {
+    const fresh = localStorage.getItem('isha_cafe_menu');
+    if (fresh) {
+      try {
+        const parsed = JSON.parse(fresh);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          MENU.length = 0;
+          parsed.forEach((m, i) => {
+            m.id = i;
+            m.code = (m.code !== undefined && m.code !== null && m.code !== '') ? m.code : (i + 1);
+            m.img = getDishImage(m.n, m.c, m.img);
+            MENU.push(m);
+          });
+          if (typeof renderMenuGrid === 'function') renderMenuGrid();
+        }
+      } catch(err){}
+    }
+  }
 });
 try {
   localStorage.setItem('isha_cafe_menu', JSON.stringify(MENU));
