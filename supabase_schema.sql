@@ -52,6 +52,14 @@ $$;
 ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.token_counter ENABLE ROW LEVEL SECURITY;
 
+-- Clean up existing policies if re-running script
+DROP POLICY IF EXISTS "Allow public read access to orders" ON public.orders;
+DROP POLICY IF EXISTS "Allow public insert access to orders" ON public.orders;
+DROP POLICY IF EXISTS "Allow public update access to orders" ON public.orders;
+DROP POLICY IF EXISTS "Allow public delete access to orders" ON public.orders;
+DROP POLICY IF EXISTS "Allow public read token counter" ON public.token_counter;
+DROP POLICY IF EXISTS "Allow public update token counter" ON public.token_counter;
+
 -- Allow public SELECT, INSERT, UPDATE, DELETE on orders table
 CREATE POLICY "Allow public read access to orders" 
 ON public.orders FOR SELECT USING (true);
@@ -73,4 +81,9 @@ CREATE POLICY "Allow public update token counter"
 ON public.token_counter FOR UPDATE USING (true);
 
 -- 5. ENABLE REALTIME WEBSOCKET REPLICATION FOR INSTANT POS SYNC
-ALTER PUBLICATION supabase_realtime ADD TABLE public.orders;
+DO $$
+BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.orders;
+EXCEPTION
+    WHEN OTHERS THEN NULL;
+END $$;
