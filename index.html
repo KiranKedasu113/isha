@@ -1207,6 +1207,9 @@ function processReceivedOrder(orderData, isInitialPoll = false){
   if(existingIdx === -1){
     tableOrders.unshift(orderData);
   } else {
+    if(tableOrders[existingIdx].status === 'Printed'){
+      orderData.status = 'Printed';
+    }
     tableOrders[existingIdx] = { ...tableOrders[existingIdx], ...orderData };
   }
   localStorage.setItem('isha_cafe_table_orders', JSON.stringify(tableOrders));
@@ -1618,9 +1621,33 @@ function directPrintTableOrder(orderId){
   // Mark as Printed and move to printed list
   target.status = 'Printed';
   localStorage.setItem('isha_cafe_table_orders', JSON.stringify(orders));
+
+  // Sync Printed status to Supabase PostgreSQL
+  try {
+    const sbUrl = getSupabaseUrl();
+    const sbKey = getSupabaseKey();
+    if(sbUrl && sbKey){
+      const cleanUrl = sbUrl.replace(/\/$/, '');
+      fetch(`${cleanUrl}/rest/v1/orders?token=eq.${tokenNo}`, {
+        method: 'PATCH',
+        headers: {
+          'apikey': sbKey,
+          'Authorization': `Bearer ${sbKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status: 'Printed' })
+      }).catch(e => {});
+
+      if(window.supabase){
+        const sb = window.supabase.createClient(sbUrl, sbKey);
+        sb.from('orders').update({ status: 'Printed' }).eq('token', tokenNo).then(()=>{});
+      }
+    }
+  } catch(e){}
+
   renderTableOrdersView();
 
-  showToast(`🖨️ Printed Token #${tokenNo} (${name}) — Moved to Printed List!`);
+  showToast(`🖨️ Printed Token #${tokenNo} (${name}) — Cleared from Pending!`);
 }
 
 function printAllPendingOrders(){
@@ -1635,7 +1662,26 @@ function printAllPendingOrders(){
   directPrintTableOrder(pending[0].id);
 
   // Mark remaining pending orders as printed
-  pending.forEach(o => o.status = 'Printed');
+  pending.forEach(o => {
+    o.status = 'Printed';
+    try {
+      const sbUrl = getSupabaseUrl();
+      const sbKey = getSupabaseKey();
+      if(sbUrl && sbKey){
+        const cleanUrl = sbUrl.replace(/\/$/, '');
+        fetch(`${cleanUrl}/rest/v1/orders?token=eq.${o.token}`, {
+          method: 'PATCH',
+          headers: {
+            'apikey': sbKey,
+            'Authorization': `Bearer ${sbKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ status: 'Printed' })
+        }).catch(e => {});
+      }
+    } catch(e){}
+  });
+
   localStorage.setItem('isha_cafe_table_orders', JSON.stringify(orders));
   renderTableOrdersView();
 }
@@ -1680,8 +1726,30 @@ function loadTableOrderToPOS(orderId){
 function deleteTableOrder(orderId){
   addClearedOrderId(orderId);
   let orders = getTableOrdersFromStorage();
+  const target = orders.find(o => (''+o.id) === (''+orderId));
+  if(target && target.token) addClearedOrderId(target.token);
+
   orders = orders.filter(o => (''+o.id) !== (''+orderId));
   localStorage.setItem('isha_cafe_table_orders', JSON.stringify(orders));
+
+  // Sync deletion to Supabase PostgreSQL
+  if(target && target.token){
+    try {
+      const sbUrl = getSupabaseUrl();
+      const sbKey = getSupabaseKey();
+      if(sbUrl && sbKey){
+        const cleanUrl = sbUrl.replace(/\/$/, '');
+        fetch(`${cleanUrl}/rest/v1/orders?token=eq.${target.token}`, {
+          method: 'DELETE',
+          headers: {
+            'apikey': sbKey,
+            'Authorization': `Bearer ${sbKey}`
+          }
+        }).catch(e => {});
+      }
+    } catch(e){}
+  }
+
   renderTableOrdersView();
   showToast(`Order cleared!`);
 }
