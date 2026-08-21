@@ -434,24 +434,6 @@
 <script>
 /* DEFAULT MENU DATA */
 const DEFAULT_MENU = [
-  // Irani (Teas, Milks & Biscuits)
-  {n:"Irani Tea",c:"Irani",veg:1,p:20},
-  {n:"Irani Black Tea",c:"Irani",veg:1,p:20},
-  {n:"Irani Tea with Malai",c:"Irani",veg:1,p:25},
-  {n:"Lemon Tea",c:"Irani",veg:1,p:25},
-  {n:"Green Tea",c:"Irani",veg:1,p:25},
-  {n:"Badam Milk",c:"Irani",veg:1,p:25},
-  {n:"Rose Milk",c:"Irani",veg:1,p:25},
-  {n:"Coffee",c:"Irani",veg:1,p:25},
-  {n:"Boost",c:"Irani",veg:1,p:25},
-  {n:"Horlicks",c:"Irani",veg:1,p:25},
-  {n:"Bournvita",c:"Irani",veg:1,p:25},
-  {n:"Hot Milk Honey",c:"Irani",veg:1,p:25},
-  {n:"Osmania Biscuits",c:"Irani",veg:1,p:15},
-  {n:"Kaju Biscuits",c:"Irani",veg:1,p:20},
-  {n:"Fruit Biscuits",c:"Irani",veg:1,p:20},
-  {n:"Chand Biscuits",c:"Irani",veg:1,p:20},
-  {n:"Fine Biscuits",c:"Irani",veg:1,p:15},
   // Momo Corner
   {n:"Veg Momo",c:"Momo Corner",veg:1,p:99},
   {n:"Veg Schezwan Momo",c:"Momo Corner",veg:1,p:99},
@@ -850,6 +832,7 @@ if(savedMenu){
 if(!Array.isArray(MENU) || !MENU.length){
   MENU = DEFAULT_MENU;
 }
+MENU = MENU.filter(m => m.c !== 'Irani');
 
 MENU.forEach((m,i)=>{
   m.id = i;
