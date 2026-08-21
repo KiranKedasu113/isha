@@ -939,6 +939,10 @@ MENU.forEach((m,i)=>{
 // BroadcastChannel & Storage Event Real-time synchronization when admin updates menu
 const ishaMobBc = (typeof BroadcastChannel !== 'undefined') ? new BroadcastChannel('isha_menu_channel') : null;
 
+function getMobCats() {
+  return [...new Set(MENU.map(m => m.c))];
+}
+
 function applyFreshMobMenu(freshList) {
   if (Array.isArray(freshList) && freshList.length > 0) {
     MENU = freshList.filter(m => m.c !== 'Irani');
@@ -951,7 +955,7 @@ function applyFreshMobMenu(freshList) {
       localStorage.setItem('isha_cafe_menu', JSON.stringify(freshList));
       localStorage.setItem('isha_cafe_custom_menu', JSON.stringify(freshList));
     } catch(e){}
-    if (typeof renderMobItems === 'function') renderMobItems();
+    if (typeof renderMobDishes === 'function') renderMobDishes();
     if (typeof renderMobCatPills === 'function') renderMobCatPills();
   }
 }
@@ -998,15 +1002,14 @@ async function syncCloudMenuMob() {
 }
 setTimeout(syncCloudMenuMob, 500);
 
-const CATS = [...new Set(MENU.map(m=>m.c))];
-
 let activeMobCat = 'All';
 let mobCart = {}; // id -> qty
 
 /* RENDER CATEGORY PILLS */
 function renderMobCatPills(){
   const container = document.getElementById('catScrollPills');
-  const cats = ['All', ...CATS];
+  if(!container) return;
+  const cats = ['All', ...getMobCats()];
   container.innerHTML = cats.map(c => `
     <div class="cat-pill ${c === activeMobCat ? 'active' : ''}" onclick="setMobCat('${c}')">
       <span>${CAT_ICONS[c] || '🍽️'}</span> ${c}
@@ -1022,11 +1025,13 @@ function setMobCat(c){
 
 /* RENDER DISHES LIST */
 function renderMobDishes(){
-  const q = document.getElementById('mobSearch').value.toLowerCase();
+  const searchInput = document.getElementById('mobSearch');
+  const q = searchInput ? searchInput.value.toLowerCase() : '';
   const out = document.getElementById('dishesListOutput');
+  if(!out) return;
   out.innerHTML = '';
 
-  const displayCats = activeMobCat === 'All' ? CATS : [activeMobCat];
+  const displayCats = activeMobCat === 'All' ? getMobCats() : [activeMobCat];
 
   let hasItems = false;
   displayCats.forEach(cat => {

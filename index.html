@@ -1193,6 +1193,10 @@ MENU.forEach((m,i)=>{
 // BroadcastChannel & Storage Event Real-time synchronization when admin updates menu
 const ishaPosBc = (typeof BroadcastChannel !== 'undefined') ? new BroadcastChannel('isha_menu_channel') : null;
 
+function getPosCats() {
+  return [...new Set(MENU.map(m => m.c))];
+}
+
 function applyFreshMenu(freshList) {
   if (Array.isArray(freshList) && freshList.length > 0) {
     MENU.length = 0;
@@ -1207,6 +1211,9 @@ function applyFreshMenu(freshList) {
       localStorage.setItem('isha_cafe_custom_menu', JSON.stringify(MENU));
     } catch(e){}
     if (typeof renderMenuGrid === 'function') renderMenuGrid();
+    if (typeof renderChips === 'function') renderChips();
+    if (typeof renderPickGrid === 'function') renderPickGrid();
+    if (typeof renderMenu === 'function') renderMenu();
   }
 }
 
@@ -1296,15 +1303,17 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
 
 /* ---------------- CUSTOMER MENU RENDER ---------------- */
 function renderMenu(){
-  const q = document.getElementById('menuSearch').value.toLowerCase();
+  const searchInput = document.getElementById('menuSearch');
+  const q = searchInput ? searchInput.value.toLowerCase() : '';
   const out = document.getElementById('menuOutput');
+  if(!out) return;
   out.innerHTML='';
-  CATS.forEach(cat=>{
+  getPosCats().forEach(cat=>{
     const items = MENU.filter(m=>m.c===cat && (m.n.toLowerCase().includes(q) || (''+m.code).includes(q)));
     if(!items.length) return;
     const block = document.createElement('div');
     block.className='cat-block';
-    block.innerHTML = `<div class="cat-title" style="background:${CAT_COLORS[cat]}">${cat}</div>
+    block.innerHTML = `<div class="cat-title" style="background:${CAT_COLORS[cat] || 'var(--primary)'}">${cat}</div>
       <div class="cat-grid">${items.map(m=>`
         <div class="item-row">
           <div class="name"><span class="item-code">${m.code}</span><span class="dot ${m.veg? 'veg':'nonveg'}"></span>${m.n}${m.u?`<span class="sub">&nbsp;${m.u}</span>`:''}</div>
@@ -1323,7 +1332,8 @@ let topMatchedQty = 1;
 
 function renderChips(){
   const row = document.getElementById('chipRow');
-  const cats = ['All',...CATS];
+  if(!row) return;
+  const cats = ['All',...getPosCats()];
   row.innerHTML = cats.map(c=>`<div class="chip ${c===activeCat?'active':''}" onclick="setCat('${c}')"><span class="cat-icon">${CAT_ICONS[c]||'🍽️'}</span> ${c}</div>`).join('');
 }
 function setCat(c){ activeCat=c; renderChips(); renderPickGrid(); }
