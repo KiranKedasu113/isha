@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Isha Cafe — Customer Menu & Mini-Game</title>
+<script src="config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root{
@@ -783,8 +784,8 @@ async function pushOrderToCloudStore(orderDetails){
 
   // Supabase PostgreSQL Direct Push (REST API + SDK)
   try {
-    const sbUrl = localStorage.getItem('isha_cafe_supabase_url');
-    const sbKey = localStorage.getItem('isha_cafe_supabase_key');
+    const sbUrl = getSupabaseUrl();
+    const sbKey = getSupabaseKey();
     if(sbUrl && sbKey){
       const cleanUrl = sbUrl.replace(/\/$/, '');
       fetch(`${cleanUrl}/rest/v1/orders`, {
@@ -801,7 +802,7 @@ async function pushOrderToCloudStore(orderDetails){
           items: orderDetails.items,
           status: orderDetails.status || 'Pending'
         })
-      }).catch(e => {});
+      }).catch(e => console.log('Supabase push error:', e));
 
       if(window.supabase){
         const sb = window.supabase.createClient(sbUrl, sbKey);

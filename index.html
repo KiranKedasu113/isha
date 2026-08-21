@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Isha Cafe — Menu & Billing</title>
+<script src="config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root{
@@ -1237,8 +1238,8 @@ let isFirstPollCompleted = false;
 
 // Real-time Supabase PostgreSQL Listener
 (function initSupabaseRealtime(){
-  const sbUrl = localStorage.getItem('isha_cafe_supabase_url');
-  const sbKey = localStorage.getItem('isha_cafe_supabase_key');
+  const sbUrl = getSupabaseUrl();
+  const sbKey = getSupabaseKey();
   if(sbUrl && sbKey && window.supabase){
     try {
       const sb = window.supabase.createClient(sbUrl, sbKey);
@@ -1267,8 +1268,8 @@ async function pollCloudOrders(){
   isFirstPollCompleted = true;
 
   // 0. Poll Supabase PostgreSQL Database (If Credentials Configured)
-  const sbUrl = localStorage.getItem('isha_cafe_supabase_url');
-  const sbKey = localStorage.getItem('isha_cafe_supabase_key');
+  const sbUrl = getSupabaseUrl();
+  const sbKey = getSupabaseKey();
   if(sbUrl && sbKey){
     try {
       const cleanUrl = sbUrl.replace(/\/$/, '');
