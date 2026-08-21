@@ -728,12 +728,37 @@ function renderDrawerItems(){
 
 let currentOrderToken = 101;
 
-function submitCustomerOrderAndStartGame(){
+async function fetchGlobalNextToken(){
+  let localToken = parseInt(localStorage.getItem('isha_cafe_last_token')) || 100;
+  let cloudToken = localToken;
+  try {
+    const res = await fetch('https://api.restful-api.dev/objects/ff8081819ff5b11001a0235f22846a26');
+    if(res.ok){
+      const data = await res.json();
+      if(data && data.data && data.data.token){
+        cloudToken = parseInt(data.data.token) || localToken;
+      }
+    }
+  } catch(e){}
+
+  const nextToken = Math.max(localToken, cloudToken) + 1;
+  localStorage.setItem('isha_cafe_last_token', nextToken);
+
+  try {
+    fetch('https://api.restful-api.dev/objects/ff8081819ff5b11001a0235f22846a26', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: "Isha Cafe Token", data: { token: nextToken } })
+    }).catch(e => {});
+  } catch(e){}
+
+  return nextToken;
+}
+
+async function submitCustomerOrderAndStartGame(){
   closeAllModals();
 
-  let lastToken = parseInt(localStorage.getItem('isha_cafe_last_token')) || 100;
-  currentOrderToken = lastToken + 1;
-  localStorage.setItem('isha_cafe_last_token', currentOrderToken);
+  currentOrderToken = await fetchGlobalNextToken();
 
   const params = new URLSearchParams(window.location.search);
   const table = params.get('table') || '1';

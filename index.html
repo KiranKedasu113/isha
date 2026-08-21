@@ -1048,14 +1048,39 @@ function syncTableSelection(){
   }
 }
 
+async function fetchGlobalNextToken(){
+  let localToken = parseInt(localStorage.getItem('isha_cafe_last_token')) || 100;
+  let cloudToken = localToken;
+  try {
+    const res = await fetch('https://api.restful-api.dev/objects/ff8081819ff5b11001a0235f22846a26');
+    if(res.ok){
+      const data = await res.json();
+      if(data && data.data && data.data.token){
+        cloudToken = parseInt(data.data.token) || localToken;
+      }
+    }
+  } catch(e){}
+
+  const nextToken = Math.max(localToken, cloudToken) + 1;
+  localStorage.setItem('isha_cafe_last_token', nextToken);
+
+  try {
+    fetch('https://api.restful-api.dev/objects/ff8081819ff5b11001a0235f22846a26', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: "Isha Cafe Token", data: { token: nextToken } })
+    }).catch(e => {});
+  } catch(e){}
+
+  return nextToken;
+}
+
 /* ---------------- CASHIER PLACE ORDER & PRINT ---------------- */
-function placeCashierOrder(shouldPrint = true){
+async function placeCashierOrder(shouldPrint = true){
   const ids = Object.keys(cart);
   if(!ids.length) return;
 
-  let tokenNo = parseInt(localStorage.getItem('isha_cafe_last_token')) || 100;
-  tokenNo += 1;
-  localStorage.setItem('isha_cafe_last_token', tokenNo);
+  let tokenNo = await fetchGlobalNextToken();
 
   const posTokenSpan = document.getElementById('posTokenNum');
   if(posTokenSpan) posTokenSpan.textContent = tokenNo;
