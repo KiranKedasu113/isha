@@ -1051,6 +1051,33 @@ function syncTableSelection(){
 }
 
 async function fetchGlobalNextToken(){
+  const sbUrl = getSupabaseUrl();
+  const sbKey = getSupabaseKey();
+
+  // 1. PostgreSQL Atomic Token RPC Call (100% Conflict-Free)
+  if(sbUrl && sbKey){
+    try {
+      const cleanUrl = sbUrl.replace(/\/$/, '');
+      const res = await fetch(`${cleanUrl}/rest/v1/rpc/get_next_token`, {
+        method: 'POST',
+        headers: {
+          'apikey': sbKey,
+          'Authorization': `Bearer ${sbKey}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      if(res.ok){
+        const val = await res.json();
+        const nextTok = parseInt(val);
+        if(nextTok && !isNaN(nextTok)){
+          localStorage.setItem('isha_cafe_last_token', nextTok);
+          return nextTok;
+        }
+      }
+    } catch(e){}
+  }
+
+  // 2. Fallback to Cloud/Local counter
   let localToken = parseInt(localStorage.getItem('isha_cafe_last_token')) || 100;
   let cloudToken = localToken;
   try {
@@ -1070,7 +1097,7 @@ async function fetchGlobalNextToken(){
     fetch('https://api.restful-api.dev/objects/ff8081819ff5b11001a0235f22846a26', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: "Isha Cafe Token", data: { token: nextToken } })
+      body: JSON.stringify({ name: "Isha Cafe Store", data: { token: nextToken } })
     }).catch(e => {});
   } catch(e){}
 
