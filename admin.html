@@ -818,21 +818,37 @@ const DISH_IMGS = {
   "Chicken Wings Fried Rice (Full)": "images/chicken_wings_fried_rice.jpg",
   "Chilly Chicken": "https://images.unsplash.com/photo-1610057099443-fde8c4d50f91?w=400&auto=format&fit=crop&q=80",
   "Chicken Lollipop Fried Rice (Half)": "https://images.unsplash.com/photo-1608039829572-78524f79c4c7?w=400&auto=format&fit=crop&q=80",
-  "Chicken Lollipop Fried Rice (Full)": "https://images.unsplash.com/photo-1562967914-608f82629710?w=400&auto=format&fit=crop&q=80"
+  "Chicken Lollipop Fried Rice (Full)": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&auto=format&fit=crop&q=80"
 };
 
 function getDishImage(dishName, catName, customImg) {
-  if (customImg && typeof customImg === 'string' && customImg.trim() !== '') {
-    return customImg.trim();
-  }
   if (!dishName) return DEFAULT_CAT_IMGS[catName] || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&auto=format&fit=crop&q=80';
   const cleanName = dishName.trim();
-  if (DISH_IMGS[cleanName]) return DISH_IMGS[cleanName];
-  
   const lower = cleanName.toLowerCase();
-  const keys = Object.keys(DISH_IMGS);
-  const foundKey = keys.find(k => k.toLowerCase() === lower);
-  if (foundKey) return DISH_IMGS[foundKey];
+  
+  const specificImg = DISH_IMGS[cleanName] || DISH_IMGS[Object.keys(DISH_IMGS).find(k => k.toLowerCase() === lower)];
+
+  if (customImg && typeof customImg === 'string' && customImg.trim() !== '') {
+    const u = customImg.trim();
+    // Check if customImg is a generic or stale default image
+    const isGenericOrStale = u.includes('photo-1573140247632') || 
+                             u.includes('photo-1589301760014') || 
+                             u.includes('photo-1626777552726') || 
+                             u.includes('photo-1587888637140') ||
+                             u.includes('photo-1601050690597') ||
+                             u === 'images/momo.jpg' ||
+                             u === 'images/samosa.jpg' ||
+                             u === 'images/burger.jpg' ||
+                             u === 'images/pizza.jpg' ||
+                             u === 'images/fries.jpg' ||
+                             u === 'images/wings.jpg' ||
+                             u === 'images/fried_rice.jpg';
+    if (!isGenericOrStale) {
+      return u;
+    }
+  }
+
+  if (specificImg) return specificImg;
 
   // Smart item-name keyword matching fallback
   if (lower.includes('schezwan') && (lower.includes('rice') || lower.includes('fried'))) return 'images/schezwan_fried_rice.jpg';
@@ -843,16 +859,30 @@ function getDishImage(dishName, catName, customImg) {
   if (lower.includes('egg') && (lower.includes('rice') || lower.includes('fried'))) return 'https://images.unsplash.com/photo-1512058564366-18510be2db19?w=400&auto=format&fit=crop&q=80';
   if (lower.includes('chicken') && (lower.includes('rice') || lower.includes('fried'))) return 'https://images.unsplash.com/photo-1603105037880-880cd4edfb5d?w=400&auto=format&fit=crop&q=80';
   if (lower.includes('fried rice') || lower.includes('rice')) return 'images/fried_rice.jpg';
+
+  if (lower.includes('schezwan momo')) return 'https://images.unsplash.com/photo-1625220194771-7ebdea0b70b9?w=400&auto=format&fit=crop&q=80';
+  if (lower.includes('cheese momo')) return 'https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=400&auto=format&fit=crop&q=80';
+  if (lower.includes('butter chicken momo')) return 'https://images.unsplash.com/photo-1588166524941-3bf61a9c41db?w=400&auto=format&fit=crop&q=80';
+  if (lower.includes('tikka momo')) return 'https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?w=400&auto=format&fit=crop&q=80';
+  if (lower.includes('peri peri momo')) return 'https://images.unsplash.com/photo-1562967914-608f82629710?w=400&auto=format&fit=crop&q=80';
+  if (lower.includes('mushroom momo')) return 'https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=400&auto=format&fit=crop&q=80';
   if (lower.includes('momo')) return 'images/momo.jpg';
+
+  if (lower.includes('corn samosa')) return 'https://images.unsplash.com/photo-1541696432-82c6da8ce7bf?w=400&auto=format&fit=crop&q=80';
+  if (lower.includes('paneer samosa')) return 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=400&auto=format&fit=crop&q=80';
+  if (lower.includes('onion samosa')) return 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=400&auto=format&fit=crop&q=80';
+  if (lower.includes('kachori')) return 'https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?w=400&auto=format&fit=crop&q=80';
+  if (lower.includes('egg samosa')) return 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=400&auto=format&fit=crop&q=80';
+  if (lower.includes('chicken samosa')) return 'https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?w=400&auto=format&fit=crop&q=80';
+  if (lower.includes('samosa')) return 'images/samosa.jpg';
+
   if (lower.includes('egg puff')) return 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400&auto=format&fit=crop&q=80';
   if (lower.includes('chicken puff')) return 'https://images.unsplash.com/photo-1626082929543-5bab0f096c46?w=400&auto=format&fit=crop&q=80';
   if (lower.includes('veg puff') || lower.includes('puff')) return 'https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=400&auto=format&fit=crop&q=80';
-  if (lower.includes('corn samosa')) return 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=400&auto=format&fit=crop&q=80';
-  if (lower.includes('paneer samosa')) return 'https://images.unsplash.com/photo-1601050690187-013175c2e391?w=400&auto=format&fit=crop&q=80';
-  if (lower.includes('samosa')) return 'images/samosa.jpg';
-  if (lower.includes('kachori')) return 'https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?w=400&auto=format&fit=crop&q=80';
+
   if (lower.includes('garlic bread')) return 'https://assets-jpcust.jwpsrv.com/thumbnails/5ybpabzh-720.jpg';
   if (lower.includes('bun') || lower.includes('maska')) return 'images/bun_maska.jpg';
+
   if (lower.includes('mango lassi')) return 'images/mango_lassi.jpg';
   if (lower.includes('strawberry lassi')) return 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=400&auto=format&fit=crop&q=80';
   if (lower.includes('chocolate lassi')) return 'https://images.unsplash.com/photo-1579954115545-aad5164da261?w=400&auto=format&fit=crop&q=80';
@@ -862,6 +892,7 @@ function getDishImage(dishName, catName, customImg) {
   if (lower.includes('orange lassi')) return 'https://images.unsplash.com/photo-1613478223719-2ab802602423?w=400&auto=format&fit=crop&q=80';
   if (lower.includes('butterscotch lassi')) return 'https://images.unsplash.com/photo-1541658016709-82535e94bc69?w=400&auto=format&fit=crop&q=80';
   if (lower.includes('sweet lassi') || lower.includes('lassi')) return 'https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=400&auto=format&fit=crop&q=80';
+
   if (lower.includes('cold coffee')) return 'https://images.unsplash.com/photo-1517701604599-bb29b565090c?w=400&auto=format&fit=crop&q=80';
   if (lower.includes('oreo')) return 'https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=400&auto=format&fit=crop&q=80';
   if (lower.includes('kitkat') || lower.includes('kit kat')) return 'https://images.unsplash.com/photo-1579954115545-aad5164da261?w=400&auto=format&fit=crop&q=80';
@@ -873,6 +904,7 @@ function getDishImage(dishName, catName, customImg) {
   if (lower.includes('orange')) return 'https://images.unsplash.com/photo-1613478223719-2ab802602423?w=400&auto=format&fit=crop&q=80';
   if (lower.includes('butterscotch')) return 'https://images.unsplash.com/photo-1541658016709-82535e94bc69?w=400&auto=format&fit=crop&q=80';
   if (lower.includes('vanilla') || lower.includes('milkshake') || lower.includes('shake')) return 'https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=400&auto=format&fit=crop&q=80';
+
   if (lower.includes('burger')) return 'images/burger.jpg';
   if (lower.includes('pizza')) return 'images/pizza.jpg';
   if (lower.includes('wings')) return 'images/wings.jpg';
