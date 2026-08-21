@@ -250,6 +250,7 @@
     <button class="active" onclick="switchSection('menuSec', this)">📋 Menu Manager & Add Items</button>
     <button onclick="switchSection('gstSec', this)">⚙️ Tax & GST Settings</button>
     <button onclick="switchSection('qrSec', this)">▦ Table QR Generator</button>
+    <button onclick="switchSection('supabaseSec', this)">⚡ Supabase PostgreSQL</button>
   </nav>
 
   <!-- ================= 1. MENU & PRICE MANAGER ================= -->
@@ -387,6 +388,39 @@
       </div>
 
       <div class="table-qr-grid" id="qrPrintSection"></div>
+    </div>
+  </section>
+
+  <!-- ================= 4. SUPABASE POSTGRESQL SETUP ================= -->
+  <section class="admin-section" id="supabaseSec">
+    <div class="panel">
+      <h2>⚡ Supabase PostgreSQL Database Setup</h2>
+      <p>Connect your Isha Cafe web app to a free <b>Supabase PostgreSQL</b> database for 100% real-time cross-device mobile ordering.</p>
+
+      <div style="background:var(--bg-card);border:1.5px solid var(--gold);border-radius:12px;padding:16px 20px;margin:16px 0;">
+        <h4 style="margin:0 0 8px;color:var(--gold);font-family:'Poppins';">📜 PostgreSQL Database Script</h4>
+        <p style="margin:0 0 10px;font-size:13px;color:var(--cream-dim);">We generated a complete ready-to-run SQL schema file: <code style="color:var(--gold);background:rgba(0,0,0,0.3);padding:2px 6px;border-radius:4px;">supabase_schema.sql</code></p>
+        <ol style="margin:0;padding-left:20px;font-size:13px;color:var(--cream-dim);line-height:1.6;">
+          <li>Log in to your <b><a href="https://supabase.com" target="_blank" style="color:var(--gold);">Supabase Dashboard</a></b>.</li>
+          <li>Click <b>SQL Editor</b> ➔ <b>New Query</b>.</li>
+          <li>Copy the contents of <b><a href="supabase_schema.sql" target="_blank" style="color:var(--gold);">supabase_schema.sql</a></b>, paste it in, and click <b>Run</b>.</li>
+        </ol>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Supabase Project URL</label>
+          <input id="supabaseUrlInput" placeholder="https://your-project.supabase.co">
+        </div>
+        <div class="form-group">
+          <label>Supabase Anon API Key</label>
+          <input id="supabaseKeyInput" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">
+        </div>
+      </div>
+
+      <div style="margin-top:20px;">
+        <button class="btn primary" onclick="saveSupabaseSettings()">💾 Save Supabase Credentials</button>
+      </div>
     </div>
   </section>
 
@@ -680,6 +714,29 @@ function loadGSTSettings(){
   document.getElementById('gstDefaultState').value = defState;
 }
 loadGSTSettings();
+
+function loadSupabaseSettings(){
+  const url = localStorage.getItem('isha_cafe_supabase_url') || '';
+  const key = localStorage.getItem('isha_cafe_supabase_key') || '';
+  if(document.getElementById('supabaseUrlInput')) document.getElementById('supabaseUrlInput').value = url;
+  if(document.getElementById('supabaseKeyInput')) document.getElementById('supabaseKeyInput').value = key;
+}
+loadSupabaseSettings();
+
+function saveSupabaseSettings(){
+  const url = document.getElementById('supabaseUrlInput').value.trim();
+  const key = document.getElementById('supabaseKeyInput').value.trim();
+  localStorage.setItem('isha_cafe_supabase_url', url);
+  localStorage.setItem('isha_cafe_supabase_key', key);
+  showToast('Saved Supabase Credentials!');
+}
+
+window.onload = function(){
+  const count = parseInt(localStorage.getItem('isha_cafe_table_count')) || 10;
+  document.getElementById('qrTableCount').value = count;
+  genAdminTableQRs();
+  loadSupabaseSettings();
+};
 
 function saveGSTSettings(){
   const rate = parseFloat(document.getElementById('gstRateInput').value) || 5;

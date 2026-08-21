@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Isha Cafe — Menu & Billing</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root{
     --bg:#161210;
@@ -1232,6 +1233,32 @@ let isFirstPollCompleted = false;
       } catch(err){}
     };
   } catch(e){}
+})();
+
+// Real-time Supabase PostgreSQL Listener
+(function initSupabaseRealtime(){
+  const sbUrl = localStorage.getItem('isha_cafe_supabase_url');
+  const sbKey = localStorage.getItem('isha_cafe_supabase_key');
+  if(sbUrl && sbKey && window.supabase){
+    try {
+      const sb = window.supabase.createClient(sbUrl, sbKey);
+      sb.channel('public:orders')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, payload => {
+          if(payload && payload.new){
+            const ord = payload.new;
+            processReceivedOrder({
+              id: ord.id,
+              token: ord.token,
+              table: ord.table_no,
+              items: ord.items,
+              status: ord.status,
+              time: new Date(ord.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12: true})
+            }, false);
+          }
+        })
+        .subscribe();
+    } catch(e){}
+  }
 })();
 
 // Poll Cloud Store (api.restful-api.dev & ntfy.sh) Every 2 Seconds

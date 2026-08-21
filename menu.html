@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Isha Cafe — Customer Menu & Mini-Game</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root{
     --bg:#120e0c;
@@ -778,6 +779,21 @@ async function pushOrderToCloudStore(orderDetails){
         data: { token: cloudToken, orders: cloudOrders }
       })
     });
+  } catch(e){}
+
+  // Supabase PostgreSQL Direct Push
+  try {
+    const sbUrl = localStorage.getItem('isha_cafe_supabase_url');
+    const sbKey = localStorage.getItem('isha_cafe_supabase_key');
+    if(sbUrl && sbKey && window.supabase){
+      const sb = window.supabase.createClient(sbUrl, sbKey);
+      await sb.from('orders').insert([{
+        token: orderDetails.token,
+        table_no: orderDetails.table,
+        items: orderDetails.items,
+        status: orderDetails.status || 'Pending'
+      }]);
+    }
   } catch(e){}
 }
 
