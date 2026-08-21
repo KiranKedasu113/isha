@@ -1290,12 +1290,29 @@ async function submitCustomerOrderAndStartGame(){
   const params = new URLSearchParams(window.location.search);
   const table = params.get('table') || '1';
 
+  // Build structured items payload mapped by dish name
+  const itemsPayload = {};
+  Object.keys(mobCart).forEach(mobId => {
+    const qty = mobCart[mobId];
+    if (qty > 0 && MENU[mobId]) {
+      const m = MENU[mobId];
+      itemsPayload[m.n] = {
+        code: m.code,
+        name: m.n,
+        price: m.p,
+        qty: qty,
+        unit: m.u || '',
+        veg: m.veg
+      };
+    }
+  });
+
   // Broadcast order details to Cashier POS
   const orderDetails = {
     id: Date.now() + '_' + Math.floor(Math.random()*1000),
     token: currentOrderToken,
     table: table,
-    items: { ...mobCart },
+    items: itemsPayload,
     status: 'Pending',
     time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12: true})
   };

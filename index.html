@@ -2005,6 +2005,80 @@ function getTableOrdersFromStorage(){
   }
 }
 
+function getOrderDisplayItems(ord) {
+  if (!ord || !ord.items) return [];
+  const raw = ord.items;
+  const list = [];
+
+  // Case A: Array of item objects
+  if (Array.isArray(raw)) {
+    return raw.map(it => ({
+      code: it.code || '',
+      name: it.name || it.n || 'Item',
+      qty: parseInt(it.qty || it.q) || 1,
+      price: parseInt(it.price || it.p) || 0,
+      unit: it.unit || it.u || ''
+    }));
+  }
+
+  // Case B: Object dictionary
+  const keys = Object.keys(raw);
+  keys.forEach(key => {
+    const val = raw[key];
+    if (val && typeof val === 'object') {
+      list.push({
+        code: val.code !== undefined ? val.code : '',
+        name: val.name || val.n || key,
+        qty: parseInt(val.qty || val.q) || 1,
+        price: parseInt(val.price || val.p) || 0,
+        unit: val.unit || val.u || ''
+      });
+      return;
+    }
+
+    const qty = parseInt(val) || 1;
+
+    // First check exact dish name match in MENU
+    let m = MENU.find(x => x.n.toLowerCase() === (''+key).toLowerCase());
+    
+    // Next check item code match in MENU
+    if (!m) {
+      m = MENU.find(x => (''+x.code) === (''+key));
+    }
+
+    // Next check numeric index (accounting for non-Irani offset on mobile)
+    if (!m && !isNaN(parseInt(key))) {
+      const idx = parseInt(key);
+      const nonIraniMenu = MENU.filter(x => x.c !== 'Irani');
+      if (nonIraniMenu[idx]) {
+        m = nonIraniMenu[idx];
+      } else if (MENU[idx]) {
+        m = MENU[idx];
+      }
+    }
+
+    if (m) {
+      list.push({
+        code: m.code,
+        name: m.n,
+        qty: qty,
+        price: parseInt(m.p) || 0,
+        unit: m.u || ''
+      });
+    } else {
+      list.push({
+        code: key,
+        name: key,
+        qty: qty,
+        price: 0,
+        unit: ''
+      });
+    }
+  });
+
+  return list;
+}
+
 function renderTableOrdersView(){
   const container = document.getElementById('tableOrdersList');
   if(!container) return;
@@ -2081,20 +2155,17 @@ function renderTableOrdersView(){
 }
 
 function renderSingleOrderCard(ord, isPrinted){
-  const itemIds = Object.keys(ord.items || {});
+  const displayItems = getOrderDisplayItems(ord);
   let grandTotal = 0;
 
-  const itemsHtml = itemIds.map(id => {
-    const m = MENU[id];
-    if(!m) return '';
-    const qty = ord.items[id];
-    const itemPrice = (parseInt(m.p)||0) * qty;
+  const itemsHtml = displayItems.map(item => {
+    const itemPrice = (parseInt(item.price)||0) * item.qty;
     grandTotal += itemPrice;
     return `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:13px;border-bottom:1px dashed rgba(255,255,255,0.08);">
       <span style="display:flex;align-items:center;gap:6px;overflow:hidden;text-overflow:ellipsis;">
-        <span class="item-code" style="flex-shrink:0;">${m.code}</span>
-        <b style="color:var(--cream);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${m.n}</b>
-        <span style="color:var(--gold);font-weight:800;white-space:nowrap;">&times; ${qty}</span>
+        <span class="item-code" style="flex-shrink:0;">${item.code}</span>
+        <b style="color:var(--cream);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.name}</b>
+        <span style="color:var(--gold);font-weight:800;white-space:nowrap;">&times; ${item.qty}</span>
       </span>
       <span style="font-family:'Roboto Mono',monospace;color:var(--gold);font-weight:700;flex-shrink:0;margin-left:8px;">₹${itemPrice}</span>
     </div>`;
@@ -2227,14 +2298,13 @@ function saveQZPrinterSelections(){
 }
 
 function buildHtmlReceipt(ord, mode){
-  const itemIds = Object.keys(ord.items || {});
+  const displayItems = getOrderDisplayItems(ord);
   const gstOn = document.getElementById('gstToggle')?.checked || false;
   const customGstRate = parseFloat(localStorage.getItem('isha_cafe_gst_rate')) || 5;
 
   let sub = 0;
-  itemIds.forEach(id => {
-    const m = MENU[id];
-    if(m) sub += (parseInt(m.p)||0) * ord.items[id];
+  displayItems.forEach(item => {
+    sub += (parseInt(item.price)||0) * item.qty;
   });
   const gst = gstOn ? Math.round(sub * (customGstRate / 100)) : 0;
   const grand = sub + gst;
@@ -2246,13 +2316,10 @@ function buildHtmlReceipt(ord, mode){
 
   if(mode === 'chef'){
     // PRICE-FREE KITCHEN KOT TICKET (0 PRICES, NO TOTALS)
-    const itemsList = itemIds.map(id => {
-      const m = MENU[id];
-      if(!m) return '';
-      const qty = ord.items[id];
+    const itemsList = displayItems.map(item => {
       return `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px dashed #bbb;font-size:14px;font-weight:bold;">
-        <span>[${m.code || 'ID'}] ${m.n}</span>
-        <span style="font-size:16px;font-weight:900;">&times; ${qty}</span>
+        <span>[${item.code || 'ID'}] ${item.name}</span>
+        <span style="font-size:16px;font-weight:900;">&times; ${item.qty}</span>
       </div>`;
     }).join('');
 
@@ -2299,13 +2366,10 @@ function buildHtmlReceipt(ord, mode){
 </html>`;
   } else {
     // CASHIER CUSTOMER TAX BILL (FULL PRICES & TOTALS)
-    const itemsList = itemIds.map(id => {
-      const m = MENU[id];
-      if(!m) return '';
-      const qty = ord.items[id];
-      const p = (parseInt(m.p)||0) * qty;
+    const itemsList = displayItems.map(item => {
+      const p = (parseInt(item.price)||0) * item.qty;
       return `<div style="display:flex;justify-content:space-between;padding:2px 0;font-size:13px;">
-        <span>${m.n} &times; ${qty}</span>
+        <span>${item.name} &times; ${item.qty}</span>
         <span style="font-weight:bold;">&#8377;${p}</span>
       </div>`;
     }).join('');
@@ -2595,11 +2659,10 @@ async function directPrintTableOrder(orderId, mode = 'both'){
   const rcTokenSlipSpan = document.getElementById('rcTokenSlipNum');
   if(rcTokenSlipSpan) rcTokenSlipSpan.textContent = target.token;
 
-  const itemIds = Object.keys(target.items || {});
+  const displayItems = getOrderDisplayItems(target);
   let sub = 0;
-  itemIds.forEach(id => {
-    const m = MENU[id];
-    if(m) sub += (parseInt(m.p)||0) * (target.items[id]||0);
+  displayItems.forEach(item => {
+    sub += (parseInt(item.price)||0) * item.qty;
   });
   const total = target.totalAmount || sub;
 
@@ -2612,9 +2675,8 @@ async function directPrintTableOrder(orderId, mode = 'both'){
        <span>Time: ${target.time || ''}</span>
      </div>`;
 
-  document.getElementById('rcLines').innerHTML = itemIds.map(id=>{
-    const m=MENU[id], qty=target.items[id];
-    return `<div class="rc-line"><span>${m?m.n:id} x${qty}</span><span>₹${(m?m.p:0)*qty}</span></div>`;
+  document.getElementById('rcLines').innerHTML = displayItems.map(item => {
+    return `<div class="rc-line"><span>${item.name} &times; ${item.qty}</span><span>₹${item.price * item.qty}</span></div>`;
   }).join('');
 
   document.getElementById('rcTotals').innerHTML =
@@ -2623,9 +2685,8 @@ async function directPrintTableOrder(orderId, mode = 'both'){
   document.getElementById('rcTokenMeta').innerHTML =
     `<div class="rc-line"><span>Order / Table: Table ${target.table}</span><span>${target.date||''} ${target.time||''}</span></div>`;
 
-  document.getElementById('rcTokenLines').innerHTML = itemIds.map(id=>{
-    const m=MENU[id], qty=target.items[id];
-    return `<div class="rc-line" style="padding:4px 0;font-size:13px;border-bottom:1px dashed #ccc;"><span><span class="item-code">[${m?m.code:'ID'}]</span> <b>${m?m.n:id}</b></span><span style="font-weight:900;font-size:14px;">&times; ${qty}</span></div>`;
+  document.getElementById('rcTokenLines').innerHTML = displayItems.map(item => {
+    return `<div class="rc-line" style="padding:4px 0;font-size:13px;border-bottom:1px dashed #ccc;"><span><span class="item-code">[${item.code || 'ID'}]</span> <b>${item.name}</b></span><span style="font-weight:900;font-size:14px;">&times; ${item.qty}</span></div>`;
   }).join('');
 
   target.status = 'Printed';
@@ -2678,8 +2739,15 @@ function loadTableOrderToPOS(orderId){
   if(posTokenSpan) posTokenSpan.textContent = target.token;
 
   cart = {};
-  Object.keys(target.items || {}).forEach(id => {
-    cart[id] = target.items[id];
+  const displayItems = getOrderDisplayItems(target);
+  displayItems.forEach(item => {
+    let m = MENU.find(x => x.n.toLowerCase() === item.name.toLowerCase());
+    if (!m && item.code) {
+      m = MENU.find(x => (''+x.code) === (''+item.code));
+    }
+    if (m) {
+      cart[m.id] = (cart[m.id] || 0) + item.qty;
+    }
   });
   renderCart();
 
