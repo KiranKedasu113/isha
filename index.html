@@ -1234,20 +1234,35 @@ let isFirstPollCompleted = false;
   } catch(e){}
 })();
 
-// Fallback Poll ntfy.sh Every 2 Seconds
+// Poll Cloud Store (api.restful-api.dev & ntfy.sh) Every 2 Seconds
 async function pollCloudOrders(){
+  const isInitial = !isFirstPollCompleted;
+  isFirstPollCompleted = true;
+
+  // 1. Poll restful-api.dev global cloud store
+  try {
+    const res = await fetch('https://api.restful-api.dev/objects/ff8081819ff5b11001a0235f22846a26');
+    if(res.ok){
+      const data = await res.json();
+      if(data && data.data && Array.isArray(data.data.orders)){
+        data.data.orders.forEach(orderObj => {
+          processReceivedOrder(orderObj, isInitial);
+        });
+      }
+    }
+  } catch(e){}
+
+  // 2. Poll ntfy.sh pub/sub as secondary fallback
   try {
     const res = await fetch('https://ntfy.sh/ishacafe_orders_live_channel_9391366592/json?poll=1');
     if(res.ok){
       const text = await res.text();
       const lines = text.trim().split('\n');
-      const isInitial = !isFirstPollCompleted;
-      isFirstPollCompleted = true;
       lines.forEach(line => {
         try {
           const item = JSON.parse(line);
           if(item && item.message){
-            const orderObj = JSON.parse(item.message);
+            const orderObj = typeof item.message === 'string' ? JSON.parse(item.message) : item.message;
             processReceivedOrder(orderObj, isInitial);
           }
         } catch(err){}

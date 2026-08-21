@@ -755,6 +755,32 @@ async function fetchGlobalNextToken(){
   return nextToken;
 }
 
+async function pushOrderToCloudStore(orderDetails){
+  try {
+    let cloudOrders = [];
+    let cloudToken = orderDetails.token;
+    const res = await fetch('https://api.restful-api.dev/objects/ff8081819ff5b11001a0235f22846a26');
+    if(res.ok){
+      const data = await res.json();
+      if(data && data.data){
+        cloudOrders = Array.isArray(data.data.orders) ? data.data.orders : [];
+        cloudToken = Math.max(cloudToken, parseInt(data.data.token) || 100);
+      }
+    }
+    cloudOrders.unshift(orderDetails);
+    if(cloudOrders.length > 50) cloudOrders = cloudOrders.slice(0, 50);
+
+    await fetch('https://api.restful-api.dev/objects/ff8081819ff5b11001a0235f22846a26', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: "Isha Cafe Store",
+        data: { token: cloudToken, orders: cloudOrders }
+      })
+    });
+  } catch(e){}
+}
+
 async function submitCustomerOrderAndStartGame(){
   closeAllModals();
 
@@ -782,6 +808,9 @@ async function submitCustomerOrderAndStartGame(){
 
   localStorage.setItem('isha_cafe_latest_order', JSON.stringify(orderDetails));
   localStorage.setItem('isha_cafe_order_trigger', Date.now());
+
+  // Push to global cloud store
+  pushOrderToCloudStore(orderDetails);
 
   // Real-time Cloud Push to Cashier POS via ntfy.sh
   try {
