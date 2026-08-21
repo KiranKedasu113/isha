@@ -758,6 +758,15 @@ function submitCustomerOrderAndStartGame(){
   localStorage.setItem('isha_cafe_latest_order', JSON.stringify(orderDetails));
   localStorage.setItem('isha_cafe_order_trigger', Date.now());
 
+  // Real-time Cloud Push to Cashier POS via ntfy.sh
+  try {
+    fetch('https://ntfy.sh/ishacafe_orders_live_channel_9391366592', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(orderDetails)
+    }).catch(err => console.log('Cloud push error:', err));
+  } catch(e){}
+
   mobCart = {};
   updateFloatingCart();
 

@@ -1127,29 +1127,89 @@ function printBill(tokenOnly = false){
   if(badge) badge.textContent = lastToken + 1;
 })();
 
-/* ---------------- LIVE CUSTOMER ORDER NOTIFICATION ---------------- */
+/* ---------------- LIVE CROSS-DEVICE CUSTOMER ORDER LISTENER ---------------- */
 let pendingNotificationOrder = null;
+const processedCloudOrderIds = new Set();
 
-function checkNewCustomerOrders(){
-  const raw = localStorage.getItem('isha_cafe_latest_order');
-  if(!raw) return;
+function processReceivedOrder(orderData){
+  if(!orderData || !orderData.token || !orderData.id) return;
+  if(processedCloudOrderIds.has(orderData.id)) return;
+  processedCloudOrderIds.add(orderData.id);
+
+  // 1. Save to Cashier localStorage Table Orders
+  let tableOrders = [];
   try {
-    const order = JSON.parse(raw);
-    const lastNotifiedToken = localStorage.getItem('isha_cafe_last_notified_token');
-    if(order && order.token && (''+order.token) !== (''+lastNotifiedToken)){
-      localStorage.setItem('isha_cafe_last_notified_token', order.token);
-      showCustomerOrderNotification(order);
+    tableOrders = JSON.parse(localStorage.getItem('isha_cafe_table_orders')) || [];
+  } catch(e){}
+  
+  if(!tableOrders.some(o => (''+o.id) === (''+orderData.id) || (''+o.token) === (''+orderData.token))){
+    tableOrders.unshift(orderData);
+    localStorage.setItem('isha_cafe_table_orders', JSON.stringify(tableOrders));
+  }
+
+  // 2. Play audio notification chime
+  playOrderChimeSound();
+
+  // 3. Show live notification popup banner & render view
+  showCustomerOrderNotification(orderData);
+  renderTableOrdersView();
+}
+
+// Real-time Cloud SSE Listener (ntfy.sh)
+(function initCloudOrderSSE(){
+  try {
+    const sse = new EventSource('https://ntfy.sh/ishacafe_orders_live_channel_9391366592/sse');
+    sse.onmessage = (e) => {
+      try {
+        const payload = JSON.parse(e.data);
+        if(payload && payload.message){
+          const orderObj = JSON.parse(payload.message);
+          processReceivedOrder(orderObj);
+        }
+      } catch(err){}
+    };
+  } catch(e){}
+})();
+
+// Fallback Poll ntfy.sh Every 2 Seconds
+async function pollCloudOrders(){
+  try {
+    const res = await fetch('https://ntfy.sh/ishacafe_orders_live_channel_9391366592/json?poll=1');
+    if(res.ok){
+      const text = await res.text();
+      const lines = text.trim().split('\n');
+      lines.forEach(line => {
+        try {
+          const item = JSON.parse(line);
+          if(item && item.message){
+            const orderObj = JSON.parse(item.message);
+            processReceivedOrder(orderObj);
+          }
+        } catch(err){}
+      });
     }
   } catch(e){}
 }
 
-window.addEventListener('storage', (e) => {
-  if (e.key === 'isha_cafe_order_trigger' || e.key === 'isha_cafe_latest_order') {
-    checkNewCustomerOrders();
-  }
-});
+setInterval(pollCloudOrders, 2000);
+pollCloudOrders();
 
-setInterval(checkNewCustomerOrders, 1500);
+function playOrderChimeSound(){
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.3);
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.4);
+  } catch(e){}
+}
 
 function showCustomerOrderNotification(order){
   pendingNotificationOrder = order;
