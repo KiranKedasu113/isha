@@ -576,21 +576,21 @@
     ✂ - - - - - - - - - - CUT HERE FOR TOKEN SLIP - - - - - - - - - - ✂
   </div>
 
-  <!-- SECTION 2: SEPARATE CUSTOMER TOKEN RECEIPT SLIP -->
+  <!-- SECTION 2: CHEF KITCHEN ORDER TICKET (KOT) SLIP — STRICTLY NO PRICES -->
   <div class="receipt-section" id="customerTokenSection">
-    <h2 style="font-size:15px;text-align:center;margin:0 0 2px;">ISHA CAFE</h2>
-    <div style="text-align:center;font-size:11px;font-weight:bold;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">*** CUSTOMER ORDER TOKEN ***</div>
+    <h2 style="font-size:16px;text-align:center;margin:0 0 2px;">ISHA CAFE</h2>
+    <div style="text-align:center;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;background:#000;color:#fff;padding:3px 6px;">*** CHEF KITCHEN ORDER TICKET (KOT) ***</div>
     
-    <div style="text-align:center;font-size:24px;font-weight:900;border:2px solid #000;padding:8px;margin:6px 0;letter-spacing:1.5px;background:#f9f9f9;">
+    <div style="text-align:center;font-size:26px;font-weight:900;border:2.5px solid #000;padding:8px;margin:6px 0;letter-spacing:1.5px;background:#f9f9f9;">
       TOKEN NO: #<span id="rcTokenSlipNum">101</span>
     </div>
 
-    <div id="rcTokenMeta" style="font-size:11px;margin:6px 0;"></div>
-    <hr style="border:none;border-top:1px dashed #000;margin:6px 0;">
-    <div id="rcTokenLines" style="font-size:12px;font-weight:bold;margin:6px 0;"></div>
-    <hr style="border:none;border-top:1px dashed #000;margin:6px 0;">
+    <div id="rcTokenMeta" style="font-size:12px;font-weight:bold;margin:6px 0;"></div>
+    <hr style="border:none;border-top:1.5px dashed #000;margin:6px 0;">
+    <div id="rcTokenLines" style="font-size:13px;font-weight:bold;margin:6px 0;"></div>
+    <hr style="border:none;border-top:1.5px dashed #000;margin:6px 0;">
     <div style="text-align:center;font-size:11px;font-weight:bold;margin-top:8px;">
-      Please retain this token slip for your order pickup! 🍽️
+      👨‍🍳 CHEF / KITCHEN COPY — NO PRICES INCLUDED
     </div>
   </div>
 </div>
@@ -1579,15 +1579,16 @@ function renderSingleOrderCard(ord, isPrinted){
         </div>
 
         <div style="display:flex;gap:6px;flex-wrap:wrap;">
-          <button class="btn primary" style="flex:1;margin:0;padding:8px 8px;font-size:12px;" onclick="directPrintTableOrder('${ord.id}')">${isPrinted ? '🖨️ Re-Print' : '🖨️ Print Bill'}</button>
-          ${!isPrinted ? `<button class="btn ghost" style="margin:0;padding:8px 8px;font-size:12px;" onclick="loadTableOrderToPOS('${ord.id}')">📥 Load</button>` : ''}
-          <button class="btn ghost" style="margin:0;padding:8px 8px;font-size:12px;color:var(--red);border-color:var(--red);" onclick="deleteTableOrder('${ord.id}')">✕ Clear</button>
+          <button class="btn primary" style="flex:1;margin:0;padding:8px 6px;font-size:12px;background:var(--gold);color:#1a1205;" onclick="directPrintTableOrder('${ord.id}', 'bill')">${isPrinted ? '🖨️ Re-Print' : '🖨️ Full Bill'}</button>
+          <button class="btn primary" style="flex:1;margin:0;padding:8px 6px;font-size:12px;background:#2e7d32;color:#fff;border-color:#2e7d32;" onclick="directPrintTableOrder('${ord.id}', 'chef')">👨‍🍳 Chef KOT</button>
+          ${!isPrinted ? `<button class="btn ghost" style="margin:0;padding:8px 6px;font-size:12px;" onclick="loadTableOrderToPOS('${ord.id}')">📥 Load</button>` : ''}
+          <button class="btn ghost" style="margin:0;padding:8px 6px;font-size:12px;color:var(--red);border-color:var(--red);" onclick="deleteTableOrder('${ord.id}')">✕ Clear</button>
         </div>
       </div>
     </div>`;
 }
 
-function directPrintTableOrder(orderId){
+function directPrintTableOrder(orderId, mode = 'both'){
   const orders = getTableOrdersFromStorage();
   const target = orders.find(o => (''+o.id) === (''+orderId));
   if(!target) return;
@@ -1635,15 +1636,39 @@ function directPrintTableOrder(orderId){
   totalsHtml += `<div class="rc-line rc-grand"><span>TOTAL</span><span>₹${total}</span></div>`;
   document.getElementById('rcTotals').innerHTML = totalsHtml;
 
+  // Chef KOT Slip Meta & Items (STRICTLY NO PRICES INCLUDED!)
   document.getElementById('rcTokenMeta').innerHTML =
     `<div class="rc-line"><span>Order / Table: ${name}</span><span>${now.toLocaleDateString()} ${now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</span></div>`;
 
   document.getElementById('rcTokenLines').innerHTML = itemIds.map(id => {
     const m = MENU[id], qty = target.items[id];
-    return `<div class="rc-line" style="padding:2px 0;"><span><span class="item-code">${m.code}</span> ${m.n}</span><span>x ${qty}</span></div>`;
+    return `<div class="rc-line" style="padding:4px 0;font-size:13px;border-bottom:1px dashed #ccc;"><span><span class="item-code">[${m.code}]</span> <b>${m.n}</b></span><span style="font-weight:900;font-size:14px;">&times; ${qty}</span></div>`;
   }).join('');
 
+  const taxBillSec = document.getElementById('taxBillSection');
+  const cutSep = document.querySelector('.cut-separator');
+  const chefSec = document.getElementById('customerTokenSection');
+
+  if(mode === 'chef'){
+    if(taxBillSec) taxBillSec.style.display = 'none';
+    if(cutSep) cutSep.style.display = 'none';
+    if(chefSec) chefSec.style.display = 'block';
+  } else if(mode === 'bill'){
+    if(taxBillSec) taxBillSec.style.display = 'block';
+    if(cutSep) cutSep.style.display = 'none';
+    if(chefSec) chefSec.style.display = 'none';
+  } else {
+    if(taxBillSec) taxBillSec.style.display = 'block';
+    if(cutSep) cutSep.style.display = 'block';
+    if(chefSec) chefSec.style.display = 'block';
+  }
+
   window.print();
+
+  // Restore visibility
+  if(taxBillSec) taxBillSec.style.display = 'block';
+  if(cutSep) cutSep.style.display = 'block';
+  if(chefSec) chefSec.style.display = 'block';
 
   // Mark as Printed and move to printed list
   target.status = 'Printed';
