@@ -1071,7 +1071,7 @@ const DISH_IMGS = {
   "Chicken Lollipop Fried Rice (Full)": "https://images.unsplash.com/photo-1562967914-608f82629710?w=400&auto=format&fit=crop&q=80"
 };
 
-const CURRENT_MENU_VER = "2026_08_22_v5";
+const CURRENT_MENU_VER = "2026_08_22_v7";
 
 function getDishImage(dishName, catName, customImg) {
   if (customImg && typeof customImg === 'string' && customImg.trim() !== '') {
@@ -1122,6 +1122,17 @@ function getDishImage(dishName, catName, customImg) {
   if (lower.includes('orange lassi')) return 'https://images.unsplash.com/photo-1613478223719-2ab802602423?w=400&auto=format&fit=crop&q=80';
   if (lower.includes('butterscotch lassi')) return 'https://images.unsplash.com/photo-1541658016709-82535e94bc69?w=400&auto=format&fit=crop&q=80';
   if (lower.includes('sweet lassi') || lower.includes('lassi')) return 'https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=400&auto=format&fit=crop&q=80';
+  if (lower.includes('cold coffee')) return 'https://images.unsplash.com/photo-1517701604599-bb29b565090c?w=400&auto=format&fit=crop&q=80';
+  if (lower.includes('oreo')) return 'https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=400&auto=format&fit=crop&q=80';
+  if (lower.includes('kitkat') || lower.includes('kit kat')) return 'https://images.unsplash.com/photo-1579954115545-aad5164da261?w=400&auto=format&fit=crop&q=80';
+  if (lower.includes('strawberry')) return 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=400&auto=format&fit=crop&q=80';
+  if (lower.includes('chocolate')) return 'https://images.unsplash.com/photo-1579954115545-aad5164da261?w=400&auto=format&fit=crop&q=80';
+  if (lower.includes('banana')) return 'https://images.unsplash.com/photo-1553530666-ba11a7da3888?w=400&auto=format&fit=crop&q=80';
+  if (lower.includes('pineapple')) return 'https://images.unsplash.com/photo-1546173159-315724a31696?w=400&auto=format&fit=crop&q=80';
+  if (lower.includes('kiwi')) return 'https://images.unsplash.com/photo-1600271886742-f049cd451bba?w=400&auto=format&fit=crop&q=80';
+  if (lower.includes('orange')) return 'https://images.unsplash.com/photo-1613478223719-2ab802602423?w=400&auto=format&fit=crop&q=80';
+  if (lower.includes('butterscotch')) return 'https://images.unsplash.com/photo-1541658016709-82535e94bc69?w=400&auto=format&fit=crop&q=80';
+  if (lower.includes('vanilla') || lower.includes('milkshake') || lower.includes('shake')) return 'https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=400&auto=format&fit=crop&q=80';
   if (lower.includes('burger')) return 'images/burger.jpg';
   if (lower.includes('pizza')) return 'images/pizza.jpg';
   if (lower.includes('wings')) return 'images/wings.jpg';
