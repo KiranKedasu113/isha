@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Isha Cafe — Customer Menu & Mini-Game</title>
+<style>
+  :root{
+    --bg:#120e0c;
+    --bg-card:#1c1612;
+    --bg-sheet:#231c16;
+    --gold:#d8a13a;
+    --gold-glow:rgba(216,161,58,0.35);
+    --gold-soft:#a97e2e;
+    --cream:#f4ecd8;
+    --cream-dim:#b8ac95;
+    --line:#332a22;
+    --red:#c0392b;
+    --green:#6f9a3c;
+    --shadow: 0 10px 30px rgba(0,0,0,.6);
+    font-family:'Nunito',sans-serif;
+  }
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800;900&family=Nunito:wght@400;600;700;800&family=Roboto+Mono:wght@500;700&display=swap');
+
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--cream);min-height:100vh;overflow-x:hidden;}
+
+  .mobile-app{max-width:480px;margin:0 auto;padding-bottom:120px;position:relative;}
+
+  /* TABLE BANNER */
+  .table-banner{
+    background:linear-gradient(135deg, var(--gold), #b88225);
+    color:#1a1205;font-family:'Poppins',sans-serif;font-weight:800;
+    text-align:center;padding:11px 14px;font-size:13.5px;letter-spacing:.3px;
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    box-shadow:0 4px 16px rgba(216,161,58,0.35);position:sticky;top:0;z-index:90;
+  }
+
+  /* HEADER */
+  header.mob-header{
+    padding:16px 18px 12px;display:flex;align-items:center;justify-content:space-between;
+    border-bottom:1px solid var(--line);
+    background:rgba(18,14,12,0.85);backdrop-filter:blur(8px);
+  }
+  .brand-wrap{display:flex;align-items:center;gap:12px;}
+  .brand-mark{
+    width:46px;height:46px;border-radius:50%;
+    background:radial-gradient(circle at 30% 30%, #2a231d, #1a1512);
+    border:2px solid var(--gold);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Poppins';font-weight:800;color:var(--gold);font-size:9.5px;
+    text-align:center;line-height:1.1;box-shadow:0 0 12px var(--gold-glow);
+  }
+  .brand-title h1{font-family:'Poppins';font-weight:800;font-size:20px;margin:0;color:var(--cream);letter-spacing:.3px;}
+  .brand-title h1 span{color:var(--gold);}
+  .brand-title .tag{font-size:10px;color:var(--cream-dim);letter-spacing:1.2px;text-transform:uppercase;}
+
+  /* SEARCH BAR */
+  .search-wrap{padding:14px 18px 6px;}
+  .search-input-box{position:relative;}
+  .search-input-box input{
+    width:100%;padding:11px 16px 11px 40px;border-radius:999px;
+    border:1.5px solid var(--line);background:var(--bg-card);color:var(--cream);
+    font-size:14px;font-family:'Nunito',sans-serif;box-shadow:inset 0 2px 6px rgba(0,0,0,0.3);
+  }
+  .search-input-box input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 12px var(--gold-glow);}
+  .search-input-box::before{
+    content:"🔍";position:absolute;left:14px;top:50%;transform:translateY(-50%);
+    font-size:13px;opacity:.6;
+  }
+
+  /* CATEGORY PILLS SCROLL */
+  .cat-scroll-container{
+    display:flex;gap:8px;overflow-x:auto;padding:10px 18px 14px;
+    scrollbar-width:none; -ms-overflow-style:none;
+  }
+  .cat-scroll-container::-webkit-scrollbar{display:none;}
+  .cat-pill{
+    flex-shrink:0;background:var(--bg-card);border:1.5px solid var(--line);
+    color:var(--cream-dim);padding:8px 15px;border-radius:999px;font-weight:700;
+    font-size:13px;cursor:pointer;transition:all .2s ease;display:flex;align-items:center;gap:6px;
+  }
+  .cat-pill.active{
+    background:var(--gold);color:#1a1205;border-color:var(--gold);
+    box-shadow:0 4px 14px var(--gold-glow);transform:scale(1.02);
+  }
+
+  /* DISHES LIST */
+  .dishes-container{padding:0 18px 20px;}
+  .cat-heading{
+    font-family:'Poppins',sans-serif;font-weight:800;font-size:16px;color:var(--gold);
+    margin:20px 0 12px;display:flex;align-items:center;gap:8px;
+  }
+  .dish-card{
+    background:var(--bg-card);border:1.5px solid var(--line);border-radius:14px;
+    padding:12px;margin-bottom:14px;display:flex;gap:14px;align-items:center;
+    transition:all .18s ease;box-shadow:0 4px 16px rgba(0,0,0,0.3);cursor:pointer;
+  }
+  .dish-card:active{transform:scale(0.98);border-color:var(--gold);}
+  .dish-img-wrap{position:relative;width:95px;height:95px;flex-shrink:0;}
+  .dish-img{
+    width:100%;height:100%;border-radius:10px;object-fit:cover;
+    background:#110e0c;border:1px solid var(--line);
+  }
+  .veg-tag-badge{
+    position:absolute;top:6px;left:6px;background:rgba(0,0,0,0.7);
+    backdrop-filter:blur(4px);padding:3px 6px;border-radius:999px;
+    display:flex;align-items:center;gap:4px;font-size:10px;font-weight:700;
+  }
+  .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+  .dot.veg{background:var(--green);box-shadow:0 0 0 2px rgba(111,154,60,.4);}
+  .dot.nonveg{background:var(--red);box-shadow:0 0 0 2px rgba(192,57,43,.4);}
+
+  .dish-details{flex:1;min-width:0;}
+  .dish-title{font-family:'Poppins',sans-serif;font-weight:700;font-size:14.5px;color:var(--cream);margin-bottom:3px;}
+  .dish-unit{font-size:11.5px;color:var(--cream-dim);margin-bottom:6px;}
+  .dish-bottom{display:flex;align-items:center;justify-content:space-between;margin-top:6px;}
+  .dish-price{font-family:'Roboto Mono',monospace;color:var(--gold);font-weight:700;font-size:15px;}
+
+  .add-btn-mob{
+    background:rgba(216,161,58,.15);color:var(--gold);border:1.5px solid rgba(216,161,58,.4);
+    border-radius:8px;padding:6px 14px;font-family:'Poppins',sans-serif;font-weight:700;
+    font-size:12px;cursor:pointer;transition:all .15s ease;
+  }
+  .add-btn-mob:active{background:var(--gold);color:#1a1205;}
+
+  /* FLOATING CART BAR */
+  .floating-cart-bar{
+    position:fixed;bottom:18px;left:50%;transform:translateX(-50%);
+    width:calc(100% - 36px);max-width:440px;background:var(--gold);color:#1a1205;
+    border-radius:16px;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;
+    box-shadow:0 10px 32px var(--gold-glow);z-index:99;font-family:'Poppins',sans-serif;
+    cursor:pointer;display:none;animation:slideUp .25s ease;
+  }
+  @keyframes slideUp{from{transform:translate(-50%, 20px);opacity:0;}to{transform:translate(-50%, 0);opacity:1;}}
+  .cart-bar-info{display:flex;flex-direction:column;}
+  .cart-bar-count{font-size:11px;font-weight:800;opacity:.85;text-transform:uppercase;letter-spacing:.5px;}
+  .cart-bar-total{font-size:17px;font-weight:800;}
+  .cart-bar-action{display:flex;align-items:center;gap:6px;font-weight:800;font-size:14px;}
+
+  /* DISH DETAIL MODAL */
+  .modal-overlay{
+    position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.75);
+    z-index:100;display:none;backdrop-filter:blur(5px);
+  }
+  .detail-sheet{
+    position:fixed;bottom:0;left:50%;transform:translateX(-50%);
+    width:100%;max-width:480px;background:var(--bg-sheet);border-top-left-radius:24px;
+    border-top-right-radius:24px;padding:22px;z-index:101;display:none;
+    box-shadow:var(--shadow);border-top:2px solid var(--gold);animation:sheetIn .25s ease;
+  }
+  @keyframes sheetIn{from{transform:translate(-50%, 100%);}to{transform:translate(-50%, 0);}}
+  .sheet-img{width:100%;height:200px;border-radius:16px;object-fit:cover;margin-bottom:14px;background:#110e0c;border:1.5px solid var(--line);}
+  .sheet-title{font-family:'Poppins';font-weight:800;font-size:18px;color:var(--cream);margin-bottom:4px;}
+  .sheet-desc{font-size:13px;color:var(--cream-dim);line-height:1.5;margin-bottom:14px;}
+
+  /* CART DRAWER MODAL */
+  .cart-drawer{
+    position:fixed;bottom:0;left:50%;transform:translateX(-50%);
+    width:100%;max-width:480px;background:var(--bg-sheet);border-top-left-radius:24px;
+    border-top-right-radius:24px;padding:22px;z-index:101;display:none;
+    max-height:85vh;overflow-y:auto;box-shadow:var(--shadow);border-top:2px solid var(--gold);
+    animation:sheetIn .25s ease;
+  }
+
+  .drawer-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;border-bottom:1px solid var(--line);padding-bottom:12px;}
+  .drawer-header h3{margin:0;font-family:'Poppins';color:var(--gold);font-size:18px;}
+  .close-drawer{background:transparent;border:none;color:var(--cream-dim);font-size:22px;cursor:pointer;}
+
+  .cart-item-row{
+    display:flex;align-items:center;justify-content:space-between;padding:10px 0;
+    border-bottom:1px dashed var(--line);font-size:14px;
+  }
+  .qty-btn-group{display:flex;align-items:center;gap:8px;}
+  .qty-btn-group button{
+    width:28px;height:28px;border-radius:7px;border:1px solid var(--line);
+    background:var(--bg-card);color:var(--cream);font-weight:700;font-size:15px;cursor:pointer;
+  }
+
+  .order-btn{
+    width:100%;padding:15px;border-radius:12px;border:none;background:var(--gold);
+    color:#1a1205;font-family:'Poppins',sans-serif;font-weight:800;font-size:15.5px;
+    margin-top:18px;cursor:pointer;box-shadow:0 6px 20px var(--gold-glow);
+  }
+
+  /* ================= RISKY TARGETING GAME MODAL ================= */
+  .game-modal-overlay{
+    position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(10,8,6,0.96);
+    z-index:200;display:none;backdrop-filter:blur(8px);
+    flex-direction:column;align-items:center;justify-content:center;
+  }
+  .game-container{
+    width:100%;max-width:440px;height:90vh;max-height:680px;background:#181310;
+    border:2px solid var(--gold);border-radius:20px;position:relative;
+    overflow:hidden;box-shadow:0 0 40px var(--gold-glow);
+    display:flex;flex-direction:column;
+  }
+  .game-header-bar{
+    background:var(--bg-card);padding:12px 16px;border-bottom:1.5px solid var(--line);
+    display:flex;align-items:center;justify-content:space-between;
+    font-family:'Poppins',sans-serif;
+  }
+  .game-score-box{font-weight:800;font-size:15px;color:var(--gold);}
+  .game-timer-box{font-weight:800;font-size:15px;color:var(--cream);}
+
+  .game-arena{
+    flex:1;position:relative;background:radial-gradient(circle at 50% 50%, #241c16, #120e0c);
+    touch-action:none;overflow:hidden;cursor:crosshair;transition:background 0.2s ease;
+  }
+  .game-arena.bomb-flash { background: rgba(192,57,43,0.85) !important; }
+  .game-arena.shake-arena { animation: shakeArena 0.25s ease-in-out; }
+
+  @keyframes shakeArena {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-12px); }
+    75% { transform: translateX(12px); }
+  }
+
+  .target-item{
+    position:absolute;width:64px;height:64px;border-radius:50%;
+    background:radial-gradient(circle at 30% 30%, #3a3027, #1e1814);
+    border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;
+    font-size:30px;user-select:none;box-shadow:0 6px 18px rgba(0,0,0,0.5);
+    transition:transform 0.1s ease;animation:floatTarget 3s linear infinite;
+  }
+  .target-item:active{transform:scale(1.3);border-color:#fff;}
+
+  .target-item.bomb-target {
+    border-color: #e74c3c !important;
+    background: radial-gradient(circle at 30% 30%, #5c1912, #2c0905) !important;
+    box-shadow: 0 0 16px rgba(231,76,60,0.7) !important;
+    animation: pulseBomb 0.7s ease-in-out infinite alternate !important;
+  }
+  @keyframes pulseBomb {
+    from { transform: scale(1); }
+    to { transform: scale(1.14); }
+  }
+
+  .target-item.gold-target {
+    border-color: #f1c40f !important;
+    background: radial-gradient(circle at 30% 30%, #b8860b, #4a3605) !important;
+    box-shadow: 0 0 20px rgba(241,196,15,0.85) !important;
+    animation: goldPulse 1s ease-in-out infinite alternate !important;
+  }
+  @keyframes goldPulse {
+    from { transform: scale(1); }
+    to { transform: scale(1.18); }
+  }
+
+  @keyframes floatTarget{
+    0%{transform:translateY(0) rotate(0deg);}
+    50%{transform:translateY(-15px) rotate(10deg);}
+    100%{transform:translateY(0) rotate(0deg);}
+  }
+
+  .hit-effect{
+    position:absolute;pointer-events:none;font-family:'Poppins',sans-serif;
+    font-weight:900;font-size:20px;color:var(--gold);animation:popOut .5s ease-out forwards;
+  }
+  @keyframes popOut{
+    0%{opacity:1;transform:scale(0.8) translateY(0);}
+    100%{opacity:0;transform:scale(1.5) translateY(-30px);}
+  }
+
+  .game-over-screen{
+    position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(18,14,12,0.95);
+    display:none;flex-direction:column;align-items:center;justify-content:center;
+    padding:24px;text-align:center;z-index:20;
+  }
+  .game-over-screen h2{font-family:'Poppins';font-size:26px;color:var(--gold);margin:0 0 6px;}
+  .game-over-screen p{color:var(--cream-dim);font-size:14px;line-height:1.5;margin-bottom:20px;}
+
+  .toast-msg {
+    position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:999;
+    background:var(--gold);color:#1a1205;font-family:'Poppins',sans-serif;font-weight:800;
+    padding:10px 22px;border-radius:999px;box-shadow:var(--shadow);font-size:13px;
+    display:none;animation:toastIn .2s ease;
+  }
+
+  /* ================= ORDER CONFIRMED POPUP MODAL ================= */
+  .confirm-modal-overlay{
+    position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(10,8,6,0.85);
+    z-index:150;display:none;backdrop-filter:blur(8px);
+    align-items:center;justify-content:center;padding:20px;
+  }
+  .confirm-card{
+    background:var(--bg-sheet);border:2px solid var(--gold);border-radius:20px;
+    padding:26px 22px;width:100%;max-width:380px;text-align:center;
+    box-shadow:0 12px 40px rgba(216,161,58,0.35);animation:popIn .25s ease;
+  }
+  @keyframes popIn{from{transform:scale(0.85);opacity:0;}to{transform:scale(1);opacity:1;}}
+  @keyframes bounceIn{0%{transform:scale(0.3);opacity:0;}50%{transform:scale(1.15);}100%{transform:scale(1);opacity:1;}}
+</style>
+</head>
+<body>
+
+<div class="mobile-app">
+
+  <!-- HEADER -->
+  <header class="mob-header">
+    <div class="brand-wrap">
+      <img src="logo.png" alt="ISHA CAFE" style="width:48px;height:48px;border-radius:50%;object-fit:cover;border:1.5px solid var(--gold);box-shadow:0 0 12px var(--gold-glow);">
+      <div class="brand-title">
+        <h1>ISHA <span>CAFE</span></h1>
+        <div class="tag">Good Food, Good Mood!</div>
+      </div>
+    </div>
+    <div style="font-size:12px;color:var(--green);font-weight:800;">● Open Now</div>
+  </header>
+
+  <!-- SEARCH BAR -->
+  <div class="search-wrap">
+    <div class="search-input-box">
+      <input id="mobSearch" placeholder="Search dishes, momos, pizzas, shakes..." oninput="renderMobDishes()">
+    </div>
+  </div>
+
+  <!-- CATEGORY PILLS -->
+  <div class="cat-scroll-container" id="catScrollPills"></div>
+
+  <!-- DISHES LIST VIEW -->
+  <div class="dishes-container" id="dishesListOutput"></div>
+
+</div>
+
+<!-- FLOATING BOTTOM CART BAR -->
+<div class="floating-cart-bar" id="floatingCartBar" onclick="openCartDrawer()">
+  <div class="cart-bar-info">
+    <div class="cart-bar-count" id="cartBarCount">0 ITEMS</div>
+    <div class="cart-bar-total" id="cartBarTotal">₹0</div>
+  </div>
+  <div class="cart-bar-action">
+    <span>View Order</span> 🛒
+  </div>
+</div>
+
+<!-- MODAL OVERLAY -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeAllModals()"></div>
+
+<!-- ITEM DETAIL SHEET -->
+<div class="detail-sheet" id="detailSheet">
+  <img id="sheetImg" class="sheet-img" src="" alt="Dish">
+  <div id="sheetVegBadge" style="margin-bottom:8px;"></div>
+  <div class="sheet-title" id="sheetTitle">Dish Name</div>
+  <div class="sheet-desc" id="sheetDesc">Freshly prepared with authentic Isha Cafe spices and quality ingredients. Served hot to your table.</div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;">
+    <div style="font-family:'Roboto Mono';color:var(--gold);font-weight:700;font-size:20px;" id="sheetPrice">₹0</div>
+    <button class="order-btn" style="margin:0;width:auto;padding:12px 24px;" id="sheetAddBtn">Add to Order +</button>
+  </div>
+</div>
+
+<!-- CART DRAWER MODAL -->
+<div class="cart-drawer" id="cartDrawer">
+  <div class="drawer-header">
+    <h3>Your Order Summary</h3>
+    <button class="close-drawer" onclick="closeCartDrawer()">✕</button>
+  </div>
+  <div id="drawerItemsList"></div>
+  <div style="margin-top:16px;padding-top:12px;border-top:1.5px solid var(--line);font-size:14px;">
+    <div style="display:flex;justify-content:space-between;margin-bottom:6px;color:var(--cream-dim);">
+      <span>Subtotal</span><span id="drawerSubtotal">₹0</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-weight:800;font-size:17px;color:var(--cream);">
+      <span>Total Amount</span><span style="color:var(--gold);" id="drawerGrandTotal">₹0</span>
+    </div>
+  </div>
+  <button class="order-btn" onclick="submitCustomerOrderAndStartGame()">🔔 Confirm Order & Play Target Game!</button>
+</div>
+
+<!-- ================= ORDER CONFIRMED POPUP MODAL ================= -->
+<div class="confirm-modal-overlay" id="confirmModalOverlay">
+  <div class="confirm-card">
+    <div style="font-size:48px;margin-bottom:6px;animation:bounceIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);">🎉</div>
+    <div style="background:var(--gold);color:#1a1205;font-family:'Poppins',sans-serif;font-weight:900;font-size:20px;padding:6px 16px;border-radius:12px;display:inline-block;margin-bottom:8px;box-shadow:0 4px 14px rgba(216,161,58,0.4);" id="confirmTokenBadge">TOKEN #101</div>
+    <h2 style="font-family:'Poppins',sans-serif;font-weight:800;font-size:20px;color:var(--cream);margin:0 0 4px;">Order Confirmed!</h2>
+    <div style="font-size:13px;color:var(--gold);font-weight:700;margin-bottom:8px;" id="confirmTableLabel">📍 Table 1</div>
+    <p style="font-size:12.5px;color:var(--cream-dim);line-height:1.4;margin:0 0 16px;">
+      Your delicious order has been received & sent directly to the kitchen! 🍳
+    </p>
+
+    <div style="background:rgba(216,161,58,0.12);border:1px dashed var(--gold);border-radius:12px;padding:12px;margin-bottom:16px;">
+      <div style="font-size:12px;color:var(--gold);font-weight:800;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;">🎯 Win Discount on Bill</div>
+      <div style="font-size:12px;color:var(--cream);line-height:1.35;">Play our Target Shooter Game now while waiting to claim your <b>Bill Discount!</b></div>
+    </div>
+
+    <button class="order-btn" style="margin:0;" onclick="proceedFromConfirmToGame()">🎯 Play Target Game for Discount!</button>
+  </div>
+</div>
+
+<!-- ================= TARGET SHOOTING GAME MODAL ================= -->
+<div class="game-modal-overlay" id="gameModalOverlay">
+  <div class="game-container">
+    <div class="game-header-bar">
+      <div class="game-score-box">🎯 Points: <span id="gameScore">0</span></div>
+      <div id="livesContainer" style="font-size:14px;letter-spacing:2px;">❤️❤️❤️</div>
+      <div class="game-timer-box">⏳ <span id="gameTimer">20</span>s</div>
+    </div>
+    
+    <div class="game-arena" id="gameArena">
+      <div style="position:absolute;top:12px;left:50%;transform:translateX(-50%);font-size:11px;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:1px;pointer-events:none;white-space:nowrap;">🔥 Target Game! Hit food, avoid bombs 💣</div>
+    </div>
+
+    <!-- GAME OVER SCREEN -->
+    <div class="game-over-screen" id="gameOverScreen">
+      <div style="font-size:44px;margin-bottom:4px;" id="gameEndIcon">🎉</div>
+      <h2 id="gameEndTitle" style="margin-bottom:2px;">Order Placed!</h2>
+      <div style="font-family:'Poppins';font-size:24px;color:var(--gold);font-weight:800;margin-bottom:2px;">Score: <span id="finalScore">0</span> Pts</div>
+      <div id="riskRankBadge" style="font-size:12px;font-weight:800;color:var(--gold);margin-bottom:10px;text-transform:uppercase;letter-spacing:1px;">Rank: 🔥 Risk Master</div>
+      
+      <!-- DISCOUNT SCREENSHOT NOTICE -->
+      <div style="background:rgba(216,161,58,0.15);border:1.5px dashed var(--gold);border-radius:12px;padding:12px 14px;margin-bottom:14px;text-align:center;">
+        <div style="font-family:'Poppins',sans-serif;font-weight:800;font-size:13.5px;color:var(--gold);margin-bottom:4px;">
+          📸 NEXT VISIT DISCOUNT!
+        </div>
+        <div style="font-size:12px;color:var(--cream);line-height:1.4;">
+          Take a screenshot of this score screen & show it at the billing counter on your <b>Next Visit</b> to get a Special Discount! 🎁<br>
+          <span style="font-size:11px;color:var(--gold);font-weight:700;">(Valid ONLY on your next visit bill!)</span>
+        </div>
+      </div>
+
+      <p id="gameSuccessMsg" style="font-size:12.5px;margin-bottom:14px;">Your order has been sent to the kitchen for <b style="color:var(--cream)" id="gameTableMsg">Table 1</b>.</p>
+      <div style="display:flex;gap:10px;width:100%;">
+        <button class="order-btn" style="flex:1;margin:0;" onclick="startTargetGame()">🎯 Play Again</button>
+        <button class="order-btn" style="flex:1;margin:0;background:var(--bg-card);border:1.5px solid var(--line);color:var(--cream);" onclick="closeGameModal()">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-msg" id="toastMsg"></div>
+
+<script>
+/* DEFAULT MENU DATA */
+const DEFAULT_MENU = [
+  // Momo Corner
+  {n:"Veg Momo",c:"Momo Corner",veg:1,p:99},
+  {n:"Veg Schezwan Momo",c:"Momo Corner",veg:1,p:99},
+  {n:"Mushroom Momo",c:"Momo Corner",veg:1,p:99},
+  {n:"Paneer Momo",c:"Momo Corner",veg:1,p:99},
+  {n:"Paneer Tikka Momo",c:"Momo Corner",veg:1,p:110},
+  {n:"Chicken Momo",u:"6pcs",c:"Momo Corner",veg:0,p:80},
+  {n:"Butter Chicken Momo",u:"6pcs",c:"Momo Corner",veg:0,p:99},
+  {n:"Chicken Tikka Momo",u:"6pcs",c:"Momo Corner",veg:0,p:99},
+  {n:"Chicken Peri Peri Momo",u:"6pcs",c:"Momo Corner",veg:0,p:99},
+  {n:"Chicken Schezwan Momo",u:"6pcs",c:"Momo Corner",veg:0,p:99},
+  {n:"Chicken Cheese Momo",u:"6pcs",c:"Momo Corner",veg:0,p:129},
+  // Burgers
+  {n:"Veg Burger",c:"Burgers",veg:1,p:99},
+  {n:"Paneer Burger",c:"Burgers",veg:1,p:139},
+  {n:"Chicken Burger",c:"Burgers",veg:0,p:149},
+  {n:"Chicken Crispy Burger",c:"Burgers",veg:0,p:159},
+  // Pizzas
+  {n:"Veg Pizza",c:"Pizzas",veg:1,p:129},
+  {n:"Paneer Tikka Pizza",c:"Pizzas",veg:1,p:180},
+  {n:"Veg Cheese Pizza",c:"Pizzas",veg:1,p:140},
+  {n:"Corn Cheese Pizza",c:"Pizzas",veg:1,p:160},
+  {n:"Aalopena Cheese Pizza",c:"Pizzas",veg:1,p:140},
+  {n:"Chicken Cheese Pizza",c:"Pizzas",veg:0,p:199},
+  {n:"Chicken Tikka Pizza",c:"Pizzas",veg:0,p:240},
+  {n:"Chicken Aalopena Cheese Pizza",c:"Pizzas",veg:0,p:260},
+  {n:"Chicken Peri Peri Pizza",c:"Pizzas",veg:0,p:240},
+  // Chicken Snacks
+  {n:"Chicken Wings",u:"2pcs",c:"Chicken Snacks",veg:0,p:80},
+  {n:"Coated Spicy Chicken Wings",u:"2pcs",c:"Chicken Snacks",veg:0,p:90},
+  {n:"Chicken Strips",u:"2pcs",c:"Chicken Snacks",veg:0,p:90},
+  {n:"Supreme Chicken Nuggets",u:"6pcs",c:"Chicken Snacks",veg:0,p:90},
+  {n:"Chicken Pops",u:"14pcs",c:"Chicken Snacks",veg:0,p:75},
+  {n:"Chicken Popcorn",u:"10pcs",c:"Chicken Snacks",veg:0,p:85},
+  {n:"Spicy Chicken Popcorn",u:"10pcs",c:"Chicken Snacks",veg:0,p:95},
+  {n:"Chicken Fingers",u:"6pcs",c:"Chicken Snacks",veg:0,p:100},
+  {n:"Spicy Chicken Finger",u:"6pcs",c:"Chicken Snacks",veg:0,p:120},
+  {n:"Chicken Meat Balls",u:"12pcs",c:"Chicken Snacks",veg:0,p:80},
+  {n:"Chicken Tikka",u:"6pcs",c:"Chicken Snacks",veg:0,p:120},
+  {n:"Chicken Chilli Garlic Finger",u:"6pcs",c:"Chicken Snacks",veg:0,p:80},
+  {n:"Chicken Breaded Lollipop",u:"4pcs",c:"Chicken Snacks",veg:0,p:180},
+  {n:"Chicken Nuggets",u:"6pcs",c:"Chicken Snacks",veg:0,p:190},
+  {n:"Chicken Spring Roll",u:"5pcs",c:"Chicken Snacks",veg:0,p:80},
+  // Veg Snacks
+  {n:"Paneer Pop Bites",u:"5pcs",c:"Veg Snacks",veg:1,p:69},
+  {n:"Veg Cheese Nuggets",u:"6pcs",c:"Veg Snacks",veg:1,p:75},
+  {n:"Veg Nuggets",u:"7pcs",c:"Veg Snacks",veg:1,p:50},
+  {n:"Tandoori Paneer Nuggets",u:"6pcs",c:"Veg Snacks",veg:1,p:90},
+  {n:"Veg Finger",u:"6pcs",c:"Veg Snacks",veg:1,p:75},
+  {n:"Veg Lollipop",u:"6pcs",c:"Veg Snacks",veg:1,p:80},
+  {n:"Veg Spring Roll",u:"4pcs",c:"Veg Snacks",veg:1,p:80},
+  {n:"Paneer Spring Roll",u:"4pcs",c:"Veg Snacks",veg:1,p:95},
+  {n:"Veg Corn Samosa",c:"Veg Snacks",veg:1,p:15},
+  // Sides
+  {n:"French Fries Small",c:"Sides",veg:1,p:80},
+  {n:"French Fries Large",c:"Sides",veg:1,p:120},
+  {n:"Onion Rings",u:"6pcs",c:"Sides",veg:1,p:60},
+  // Starters
+  {n:"Dragon Chilli Chicken",c:"Starters",veg:0,p:219},
+  {n:"Chilli Chicken",c:"Starters",veg:0,p:199},
+  {n:"65 Chilli Chicken",c:"Starters",veg:0,p:199},
+  {n:"Chicken Manchuria",c:"Starters",veg:0,p:149},
+  {n:"Veg Manchuria",c:"Starters",veg:1,p:99},
+  {n:"Paneer",c:"Starters",veg:1,p:199},
+  {n:"Mushroom",c:"Starters",veg:1,p:169},
+  {n:"Kaju Banana",c:"Starters",veg:1,p:130},
+  // Sandwich
+  {n:"Veg Sandwich with Cheese",c:"Sandwich",veg:1,p:79},
+  {n:"Veg Club Sandwich",c:"Sandwich",veg:1,p:89},
+  {n:"Paneer Sandwich",c:"Sandwich",veg:1,p:149},
+  {n:"Chicken Sandwich",c:"Sandwich",veg:0,p:140},
+  {n:"Chicken Club Sandwich",c:"Sandwich",veg:0,p:149},
+  // Beverages
+  {n:"Oreo Milkshake",c:"Beverages",veg:1,p:99},
+  {n:"KitKat Milkshake",c:"Beverages",veg:1,p:99},
+  {n:"Banana Milkshake",c:"Beverages",veg:1,p:99},
+  {n:"Butterscotch Milkshake",c:"Beverages",veg:1,p:110},
+  {n:"Kaju Banana Milkshake",c:"Beverages",veg:1,p:130},
+];
+
+const DEFAULT_CAT_IMGS = {
+  "Momo Corner": "https://images.unsplash.com/photo-1625220194771-7ebdea0b70b9?w=400&auto=format&fit=crop&q=80",
+  "Burgers": "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&auto=format&fit=crop&q=80",
+  "Pizzas": "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400&auto=format&fit=crop&q=80",
+  "Chicken Snacks": "https://images.unsplash.com/photo-1562967914-608f82629710?w=400&auto=format&fit=crop&q=80",
+  "Veg Snacks": "https://images.unsplash.com/photo-1601050690597-df0568f70950?w=400&auto=format&fit=crop&q=80",
+  "Sides": "https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=400&auto=format&fit=crop&q=80",
+  "Starters": "https://images.unsplash.com/photo-1525755662778-989d0524087e?w=400&auto=format&fit=crop&q=80",
+  "Sandwich": "https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=400&auto=format&fit=crop&q=80",
+  "Beverages": "https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=400&auto=format&fit=crop&q=80"
+};
+
+const DISH_IMGS = {
+  "Veg Momo": "https://images.unsplash.com/photo-1625220194771-7ebdea0b70b9?w=400&auto=format&fit=crop&q=80",
+  "Chicken Momo": "https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=400&auto=format&fit=crop&q=80",
+  "Paneer Momo": "https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?w=400&auto=format&fit=crop&q=80",
+  "Veg Burger": "https://images.unsplash.com/photo-1550547660-d9450f859349?w=400&auto=format&fit=crop&q=80",
+  "Chicken Burger": "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&auto=format&fit=crop&q=80",
+  "Veg Pizza": "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400&auto=format&fit=crop&q=80",
+  "Chicken Wings": "https://images.unsplash.com/photo-1567620832903-9fc6debc209f?w=400&auto=format&fit=crop&q=80",
+  "French Fries Small": "https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=400&auto=format&fit=crop&q=80",
+  "Oreo Milkshake": "https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=400&auto=format&fit=crop&q=80"
+};
+
+const CAT_ICONS = {
+  "All": "🍱",
+  "Momo Corner": "🥟",
+  "Burgers": "🍔",
+  "Pizzas": "🍕",
+  "Chicken Snacks": "🍗",
+  "Veg Snacks": "🧆",
+  "Sides": "🍟",
+  "Starters": "🍲",
+  "Sandwich": "🥪",
+  "Beverages": "🥤"
+};
+
+let MENU = [];
+const savedMenu = localStorage.getItem('isha_cafe_menu');
+if(savedMenu){
+  try { MENU = JSON.parse(savedMenu); } catch(e){ MENU = DEFAULT_MENU; }
+} else {
+  MENU = DEFAULT_MENU;
+}
+
+MENU.forEach((m,i)=>{
+  m.id = i;
+  m.code = i + 1;
+  m.img = m.img || DISH_IMGS[m.n] || DEFAULT_CAT_IMGS[m.c] || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&auto=format&fit=crop&q=80';
+});
+
+const CATS = [...new Set(MENU.map(m=>m.c))];
+
+let activeMobCat = 'All';
+let mobCart = {}; // id -> qty
+
+/* RENDER CATEGORY PILLS */
+function renderMobCatPills(){
+  const container = document.getElementById('catScrollPills');
+  const cats = ['All', ...CATS];
+  container.innerHTML = cats.map(c => `
+    <div class="cat-pill ${c === activeMobCat ? 'active' : ''}" onclick="setMobCat('${c}')">
+      <span>${CAT_ICONS[c] || '🍽️'}</span> ${c}
+    </div>`).join('');
+}
+renderMobCatPills();
+
+function setMobCat(c){
+  activeMobCat = c;
+  renderMobCatPills();
+  renderMobDishes();
+}
+
+/* RENDER DISHES LIST */
+function renderMobDishes(){
+  const q = document.getElementById('mobSearch').value.toLowerCase();
+  const out = document.getElementById('dishesListOutput');
+  out.innerHTML = '';
+
+  const displayCats = activeMobCat === 'All' ? CATS : [activeMobCat];
+
+  let hasItems = false;
+  displayCats.forEach(cat => {
+    const items = MENU.filter(m => m.c === cat && (!q || m.n.toLowerCase().includes(q) || (''+m.code).includes(q)));
+    if(!items.length) return;
+    hasItems = true;
+
+    const catBlock = document.createElement('div');
+    catBlock.innerHTML = `
+      <div class="cat-heading"><span>${CAT_ICONS[cat] || '🍽️'}</span> ${cat}</div>
+      ${items.map(m => `
+        <div class="dish-card" onclick="openDishDetail(${m.id})">
+          <div class="dish-img-wrap">
+            <img src="${m.img}" class="dish-img" alt="${m.n}" onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300&auto=format&fit=crop&q=80'">
+            <div class="veg-tag-badge"><span class="dot ${m.veg ? 'veg' : 'nonveg'}"></span>${m.veg ? 'Veg' : 'NonVeg'}</div>
+          </div>
+          <div class="dish-details">
+            <div class="dish-title">${m.n}</div>
+            <div class="dish-unit">${m.u ? m.u : 'Standard portion'}</div>
+            <div class="dish-bottom">
+              <div class="dish-price">₹${m.p}</div>
+              <button class="add-btn-mob" onclick="event.stopPropagation(); addMobItem(${m.id})">+ Add</button>
+            </div>
+          </div>
+        </div>
+      `).join('')}
+    `;
+    out.appendChild(catBlock);
+  });
+
+  if(!hasItems){
+    out.innerHTML = '<div style="text-align:center;padding:40px 10px;color:var(--cream-dim);font-size:14px;">No dishes found matching search.</div>';
+  }
+}
+renderMobDishes();
+
+/* OPEN DISH DETAIL SHEET */
+function openDishDetail(id){
+  const m = MENU[id];
+  if(!m) return;
+  document.getElementById('sheetImg').src = m.img;
+  document.getElementById('sheetVegBadge').innerHTML = `<span class="dot ${m.veg?'veg':'nonveg'}"></span> <b style="font-size:12px;color:var(--cream-dim);">${m.veg?'Vegetarian':'Non-Vegetarian'}</b> &middot; <span style="font-size:12px;color:var(--gold);">${m.c}</span>`;
+  document.getElementById('sheetTitle').textContent = m.n;
+  document.getElementById('sheetPrice').textContent = '₹' + m.p;
+  document.getElementById('sheetAddBtn').onclick = function(){
+    addMobItem(id);
+    closeAllModals();
+  };
+  document.getElementById('modalOverlay').style.display = 'block';
+  document.getElementById('detailSheet').style.display = 'block';
+}
+
+function closeAllModals(){
+  document.getElementById('modalOverlay').style.display = 'none';
+  document.getElementById('detailSheet').style.display = 'none';
+  document.getElementById('cartDrawer').style.display = 'none';
+}
+
+/* MOB CART LOGIC */
+function addMobItem(id){
+  mobCart[id] = (mobCart[id] || 0) + 1;
+  updateFloatingCart();
+  const m = MENU[id];
+  showToast(`Added 1x ${m.n}`);
+}
+
+function updateMobQty(id, delta){
+  if(!mobCart[id]) return;
+  mobCart[id] += delta;
+  if(mobCart[id] <= 0) delete mobCart[id];
+  updateFloatingCart();
+  renderDrawerItems();
+}
+
+function updateFloatingCart(){
+  const ids = Object.keys(mobCart);
+  const bar = document.getElementById('floatingCartBar');
+  if(!ids.length){
+    bar.style.display = 'none';
+    closeCartDrawer();
+    return;
+  }
+  const totalCount = ids.reduce((s, id) => s + mobCart[id], 0);
+  const totalAmount = ids.reduce((s, id) => s + (parseInt(MENU[id].p)||0) * mobCart[id], 0);
+
+  document.getElementById('cartBarCount').textContent = `${totalCount} ITEM${totalCount>1?'S':''}`;
+  document.getElementById('cartBarTotal').textContent = `₹${totalAmount}`;
+  bar.style.display = 'flex';
+}
+
+function openCartDrawer(){
+  renderDrawerItems();
+  document.getElementById('modalOverlay').style.display = 'block';
+  document.getElementById('cartDrawer').style.display = 'block';
+}
+
+function closeCartDrawer(){
+  document.getElementById('modalOverlay').style.display = 'none';
+  document.getElementById('cartDrawer').style.display = 'none';
+}
+
+function renderDrawerItems(){
+  const list = document.getElementById('drawerItemsList');
+  const ids = Object.keys(mobCart);
+  if(!ids.length){
+    list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--cream-dim);">Your cart is empty.</div>';
+    document.getElementById('drawerSubtotal').textContent = '₹0';
+    document.getElementById('drawerGrandTotal').textContent = '₹0';
+    return;
+  }
+
+  list.innerHTML = ids.map(id => {
+    const m = MENU[id];
+    const qty = mobCart[id];
+    return `
+      <div class="cart-item-row">
+        <div>
+          <div style="font-weight:700;">${m.n}</div>
+          <div style="font-size:12px;color:var(--gold);">₹${m.p}</div>
+        </div>
+        <div class="qty-btn-group">
+          <button onclick="updateMobQty(${id}, -1)">−</button>
+          <span>${qty}</span>
+          <button onclick="updateMobQty(${id}, 1)">+</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  const sub = ids.reduce((s, id) => s + (parseInt(MENU[id].p)||0) * mobCart[id], 0);
+  document.getElementById('drawerSubtotal').textContent = '₹' + sub;
+  document.getElementById('drawerGrandTotal').textContent = '₹' + sub;
+}
+
+let currentOrderToken = 101;
+
+function submitCustomerOrderAndStartGame(){
+  closeAllModals();
+
+  let lastToken = parseInt(localStorage.getItem('isha_cafe_last_token')) || 100;
+  currentOrderToken = lastToken + 1;
+  localStorage.setItem('isha_cafe_last_token', currentOrderToken);
+
+  const params = new URLSearchParams(window.location.search);
+  const table = params.get('table') || '1';
+
+  // Broadcast order details to Cashier POS
+  const orderDetails = {
+    token: currentOrderToken,
+    table: table,
+    items: { ...mobCart },
+    time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})
+  };
+  localStorage.setItem('isha_cafe_latest_order', JSON.stringify(orderDetails));
+  localStorage.setItem('isha_cafe_order_trigger', Date.now());
+
+  mobCart = {};
+  updateFloatingCart();
+
+  document.getElementById('confirmTokenBadge').textContent = `TOKEN #${currentOrderToken}`;
+  document.getElementById('confirmTableLabel').textContent = `📍 Table ${table}`;
+
+  document.getElementById('confirmModalOverlay').style.display = 'flex';
+}
+
+function proceedFromConfirmToGame(){
+  document.getElementById('confirmModalOverlay').style.display = 'none';
+  startTargetGame();
+}
+
+/* ================= RISKY TARGET SHOOTING GAME LOGIC ================= */
+let gameScore = 0;
+let gameTimeLeft = 20;
+let gameLives = 3;
+let gameTimerInterval = null;
+let targetSpawnInterval = null;
+
+const REGULAR_FOODS = ['🥟', '🍔', '🍕', '🍟', '🍗', '🥤', '🥪', '🍰'];
+
+function startTargetGame(){
+  gameScore = 0;
+  gameTimeLeft = 20;
+  gameLives = 3;
+
+  updateLivesDisplay();
+  document.getElementById('gameScore').textContent = '0';
+  document.getElementById('gameTimer').textContent = '20';
+  document.getElementById('gameOverScreen').style.display = 'none';
+  document.getElementById('gameModalOverlay').style.display = 'flex';
+
+  const arena = document.getElementById('gameArena');
+  arena.className = 'game-arena';
+  arena.innerHTML = '<div style="position:absolute;top:12px;left:50%;transform:translateX(-50%);font-size:11px;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:1px;pointer-events:none;white-space:nowrap;">🔥 Target Game! Hit food, avoid bombs 💣</div>';
+
+  clearInterval(gameTimerInterval);
+  clearInterval(targetSpawnInterval);
+
+  gameTimerInterval = setInterval(() => {
+    gameTimeLeft--;
+    document.getElementById('gameTimer').textContent = gameTimeLeft;
+    if(gameTimeLeft <= 0){
+      endTargetGame(false);
+    }
+  }, 1000);
+
+  // Rapid spawn rate for high-risk mode (max score cap 200)
+  spawnRiskyTarget();
+  spawnRiskyTarget();
+  targetSpawnInterval = setInterval(spawnRiskyTarget, 480);
+}
+
+function updateLivesDisplay(){
+  const container = document.getElementById('livesContainer');
+  if(!container) return;
+  let hearts = '';
+  for(let i=0; i<3; i++){
+    hearts += i < gameLives ? '❤️' : '🖤';
+  }
+  container.textContent = hearts;
+}
+
+function spawnRiskyTarget(){
+  const arena = document.getElementById('gameArena');
+  if(!arena || document.getElementById('gameModalOverlay').style.display !== 'flex') return;
+
+  const rand = Math.random();
+  let type = 'food'; // food | bomb | gold
+  let emoji = REGULAR_FOODS[Math.floor(Math.random() * REGULAR_FOODS.length)];
+  let points = 10;
+  let duration = 1400; // fast vanish!
+
+  if (rand < 0.38) {
+    // 38% chance BOMB hazard! High Risk!
+    type = 'bomb';
+    emoji = '💣';
+    duration = 1600;
+  } else if (rand > 0.86) {
+    // 14% chance GOLD STAR bonus!
+    type = 'gold';
+    emoji = '🌟';
+    points = 25;
+    duration = 1000; // ultra fast!
+  }
+
+  const target = document.createElement('div');
+  target.className = `target-item ${type === 'bomb' ? 'bomb-target' : ''} ${type === 'gold' ? 'gold-target' : ''}`;
+  target.textContent = emoji;
+
+  const arenaWidth = arena.clientWidth - 70;
+  const arenaHeight = arena.clientHeight - 80;
+  const posX = Math.max(10, Math.floor(Math.random() * arenaWidth));
+  const posY = Math.max(35, Math.floor(Math.random() * arenaHeight));
+
+  target.style.left = posX + 'px';
+  target.style.top = posY + 'px';
+
+  target.onpointerdown = function(e){
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (type === 'bomb') {
+      // BOMB HIT! -50 Pts, -1 Life!
+      gameLives--;
+      gameScore = Math.max(0, gameScore - 50);
+      document.getElementById('gameScore').textContent = gameScore;
+      updateLivesDisplay();
+
+      // Screen flash red & shake
+      arena.classList.add('bomb-flash', 'shake-arena');
+      setTimeout(() => arena.classList.remove('bomb-flash', 'shake-arena'), 300);
+
+      hitEffect(posX, posY, '-50 💣', '#e74c3c');
+
+      if (gameLives <= 0) {
+        endTargetGame(true);
+      }
+    } else {
+      // FOOD / GOLD HIT (Capped at 200 Max Points!)
+      gameScore = Math.min(200, gameScore + points);
+      document.getElementById('gameScore').textContent = gameScore;
+
+      hitEffect(posX, posY, `+${points}`, type === 'gold' ? '#f1c40f' : '#2ecc71');
+
+      if (gameScore >= 200) {
+        endTargetGame(false);
+      }
+    }
+
+    if (target.parentNode === arena) {
+      arena.removeChild(target);
+    }
+  };
+
+  arena.appendChild(target);
+
+  setTimeout(() => {
+    if (target.parentNode === arena) {
+      arena.removeChild(target);
+    }
+  }, duration);
+}
+
+function hitEffect(x, y, text, color){
+  const arena = document.getElementById('gameArena');
+  const effect = document.createElement('div');
+  effect.className = 'hit-effect';
+  effect.textContent = text;
+  effect.style.color = color || 'var(--gold)';
+  effect.style.left = x + 'px';
+  effect.style.top = y + 'px';
+  arena.appendChild(effect);
+  setTimeout(() => { if(effect.parentNode) arena.removeChild(effect); }, 500);
+}
+
+function endTargetGame(outOfLives = false){
+  clearInterval(gameTimerInterval);
+  clearInterval(targetSpawnInterval);
+
+  const params = new URLSearchParams(window.location.search);
+  const table = params.get('table') || '1';
+
+  let rank = '🔥 Risk Master';
+  let icon = '🎉';
+  let title = 'Order Placed!';
+
+  if (outOfLives) {
+    rank = '💥 BOOM! Out of Lives';
+    icon = '💣';
+    title = 'KABOOM!';
+  } else if (gameScore >= 200) {
+    rank = '🏆 200 PTS MAX SCORE!';
+    icon = '👑';
+    title = 'MAX SCORE REACHED!';
+  } else if (gameScore >= 140) {
+    rank = '🔥 HIGH RISK SURVIVOR';
+  } else {
+    rank = '⚡ RISK TAKER';
+  }
+
+  document.getElementById('gameEndIcon').textContent = icon;
+  document.getElementById('gameEndTitle').textContent = title;
+  document.getElementById('finalScore').textContent = gameScore;
+  document.getElementById('riskRankBadge').textContent = `Rank: ${rank}`;
+  document.getElementById('gameTableMsg').innerHTML = `<b>Token #${currentOrderToken}</b> &middot; Table ${table}`;
+  document.getElementById('gameOverScreen').style.display = 'flex';
+}
+
+function closeGameModal(){
+  clearInterval(gameTimerInterval);
+  clearInterval(targetSpawnInterval);
+  document.getElementById('gameModalOverlay').style.display = 'none';
+}
+
+/* TABLE PARAMS ON LOAD */
+(function checkTableParam(){
+  const params = new URLSearchParams(window.location.search);
+  const table = params.get('table');
+  if(table){
+    // Table parameter preserved for order submission & game
+  }
+})();
+
+function showToast(msg) {
+  const toast = document.getElementById('toastMsg');
+  if (!toast) return;
+  toast.textContent = msg;
+  toast.style.display = 'block';
+  clearTimeout(window.toastTimer);
+  window.toastTimer = setTimeout(() => { toast.style.display = 'none'; }, 1800);
+}
+</script>
+</body>
+</html>
