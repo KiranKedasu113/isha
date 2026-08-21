@@ -530,7 +530,12 @@ function loadMenuData(){
   const saved = localStorage.getItem('isha_cafe_menu');
   if(saved){
     try {
-      currentMenu = JSON.parse(saved);
+      const parsed = JSON.parse(saved);
+      if(Array.isArray(parsed) && parsed.length > 0){
+        currentMenu = parsed;
+      } else {
+        currentMenu = JSON.parse(JSON.stringify(DEFAULT_MENU));
+      }
     } catch(e) {
       currentMenu = JSON.parse(JSON.stringify(DEFAULT_MENU));
     }

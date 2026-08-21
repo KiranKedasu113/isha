@@ -554,8 +554,18 @@ const CAT_ICONS = {
 let MENU = [];
 const savedMenu = localStorage.getItem('isha_cafe_menu');
 if(savedMenu){
-  try { MENU = JSON.parse(savedMenu); } catch(e){ MENU = DEFAULT_MENU; }
+  try {
+    const parsed = JSON.parse(savedMenu);
+    if(Array.isArray(parsed) && parsed.length > 0){
+      MENU = parsed;
+    } else {
+      MENU = DEFAULT_MENU;
+    }
+  } catch(e){ MENU = DEFAULT_MENU; }
 } else {
+  MENU = DEFAULT_MENU;
+}
+if(!Array.isArray(MENU) || !MENU.length){
   MENU = DEFAULT_MENU;
 }
 
