@@ -218,22 +218,72 @@
   @keyframes toastIn { from { transform:translateY(20px); opacity:0; } to { transform:translateY(0); opacity:1; } }
 
   /* PRINTING ALL QR CODES */
-  @media print{
+  @media print {
     @page { size: A4 portrait; margin: 10mm; }
-    html, body { margin: 0 !important; padding: 0 !important; height: auto !important; }
-    body > .app { display: none !important; }
+    html, body {
+      margin: 0 !important;
+      padding: 0 !important;
+      background: #fff !important;
+      color: #000 !important;
+    }
+    /* Hide top header, tabs, other sections, and panel controls during print */
+    header.top,
+    nav.admin-tabs,
+    .admin-section:not(#qrSec),
+    #qrSec .panel > *:not(#qrPrintSection),
+    .toast-msg {
+      display: none !important;
+    }
+
+    #qrSec {
+      display: block !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      background: #fff !important;
+    }
+    #qrSec .panel {
+      padding: 0 !important;
+      margin: 0 !important;
+      background: #fff !important;
+      box-shadow: none !important;
+      border: none !important;
+    }
     #qrPrintSection {
       display: grid !important;
-      position: relative !important;
-      top: 0; left: 0; width: 100%;
       grid-template-columns: repeat(3, 1fr) !important;
-      gap: 14px !important;
-      padding: 14px !important;
-      page-break-inside: avoid !important;
-      break-inside: avoid !important;
+      gap: 16px !important;
+      padding: 10px !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
     }
-    #qrPrintSection * { visibility: visible !important; }
-    .table-qr-card{break-inside:avoid;page-break-inside:avoid;border:1px dashed #999;box-shadow:none;}
+    .table-qr-card {
+      break-inside: avoid !important;
+      page-break-inside: avoid !important;
+      border: 1.5px dashed #444 !important;
+      border-radius: 12px !important;
+      padding: 14px !important;
+      text-align: center !important;
+      background: #fff !important;
+      color: #000 !important;
+      box-shadow: none !important;
+    }
+    .table-qr-card img {
+      width: 160px !important;
+      height: 160px !important;
+      margin: 0 auto 8px auto !important;
+      display: block !important;
+    }
+    .table-qr-card .t-label {
+      font-size: 16px !important;
+      font-weight: 900 !important;
+      color: #000 !important;
+      letter-spacing: 1px !important;
+    }
+    .table-qr-card .t-sub {
+      font-size: 11px !important;
+      color: #444 !important;
+      margin-top: 2px !important;
+    }
   }
 </style>
 </head>
