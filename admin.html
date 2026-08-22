@@ -1078,7 +1078,6 @@ async function saveCurrentMenu(notify = false){
   localStorage.setItem('isha_cafe_custom_menu', JSON.stringify(currentMenu));
   
   // Real-time same-device tab sync
-  try { window.dispatchEvent(new Event('storage')); } catch(e){}
   try {
     if(ishaMenuBc) ishaMenuBc.postMessage({ type: 'MENU_UPDATED', menu: currentMenu });
   } catch(e){}
@@ -1154,7 +1153,7 @@ function renderAdminTable(){
         </select>
       </td>
       <td><input type="number" class="price-input" value="${m.p}" min="0" onchange="updateDishPrice(${m.id}, this.value)"></td>
-      <td><input class="img-input" value="${m.img || ''}" placeholder="Image URL..." onchange="updateDishImg(${m.id}, this.value)"></td>
+      <td><input class="img-input" value="${m.img || ''}" placeholder="Image URL..." onchange="updateDishImg(${m.id}, this.value, this)"></td>
       <td>
         <div style="display:flex;gap:4px;">
           <button class="btn primary" style="padding:4px 8px;font-size:11px;background:var(--gold);color:#1a1205;border:none;" onclick="saveDishRow(${m.id})">Save</button>
@@ -1203,12 +1202,18 @@ function updateDishCat(id, val){
   }
 }
 
-function updateDishImg(id, val){
+function updateDishImg(id, val, inputEl){
   const dish = currentMenu.find(m => m.id === id);
   if(dish) {
     dish.img = val.trim();
     saveCurrentMenu();
-    renderAdminTable();
+    if(inputEl){
+      const tr = inputEl.closest('tr');
+      if(tr){
+        const img = tr.querySelector('img.table-thumb');
+        if(img) img.src = getDishImage(dish.n, dish.c, dish.img);
+      }
+    }
   }
 }
 
