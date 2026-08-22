@@ -978,24 +978,31 @@ window.addEventListener('storage', (e) => {
 async function syncCloudMenuAdmin() {
   const url = getSupabaseUrl();
   const key = getSupabaseKey();
-  if (url && key && window.supabase) {
+  if (url && key) {
     try {
-      const sb = window.supabase.createClient(url, key);
-      const { data } = await sb.from('cafe_menu').select('items').eq('id', 1).maybeSingle();
-      if (data && Array.isArray(data.items) && data.items.length > 0) {
-        applyFreshAdminMenu(data.items);
-      } else {
-        saveCurrentMenu(false);
+      const cleanUrl = url.replace(/\/$/, '');
+      const res = await fetch(`${cleanUrl}/rest/v1/cafe_menu?id=eq.1&select=items`, {
+        headers: { 'apikey': key, 'Authorization': `Bearer ${key}` }
+      });
+      if (res.ok) {
+        const rows = await res.json();
+        if (Array.isArray(rows) && rows.length > 0 && Array.isArray(rows[0].items) && rows[0].items.length > 0) {
+          applyFreshAdminMenu(rows[0].items);
+        } else {
+          saveCurrentMenu(false);
+        }
       }
-      
-      // Subscribe to Supabase Realtime changes
-      sb.channel('public:cafe_menu_admin')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'cafe_menu' }, payload => {
-          if (payload.new && Array.isArray(payload.new.items)) {
-            applyFreshAdminMenu(payload.new.items);
-          }
-        })
-        .subscribe();
+
+      if (window.supabase) {
+        const sb = window.supabase.createClient(url, key);
+        sb.channel('public:cafe_menu_admin')
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'cafe_menu' }, payload => {
+            if (payload.new && Array.isArray(payload.new.items)) {
+              applyFreshAdminMenu(payload.new.items);
+            }
+          })
+          .subscribe();
+      }
     } catch(err){}
   }
 }
@@ -1011,15 +1018,28 @@ async function saveCurrentMenu(notify = false){
     if(ishaMenuBc) ishaMenuBc.postMessage({ type: 'MENU_UPDATED', menu: currentMenu });
   } catch(e){}
 
-  // Cross-device Supabase cloud sync
+  // Cross-device Supabase cloud sync via direct REST fetch & SDK
   const url = getSupabaseUrl();
   const key = getSupabaseKey();
-  if(url && key && window.supabase){
+  if(url && key){
     try {
-      const sb = window.supabase.createClient(url, key);
-      await sb.from('cafe_menu').upsert({ id: 1, items: currentMenu, updated_at: new Date().toISOString() });
+      const cleanUrl = url.replace(/\/$/, '');
+      await fetch(`${cleanUrl}/rest/v1/cafe_menu`, {
+        method: 'POST',
+        headers: {
+          'apikey': key,
+          'Authorization': `Bearer ${key}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'resolution=merge-duplicates'
+        },
+        body: JSON.stringify({
+          id: 1,
+          items: currentMenu,
+          updated_at: new Date().toISOString()
+        })
+      });
     } catch(err){
-      console.warn('Supabase menu sync notice:', err);
+      console.warn('Supabase menu REST sync notice:', err);
     }
   }
 
