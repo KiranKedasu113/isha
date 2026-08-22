@@ -434,24 +434,32 @@
       <p>Specify how many tables you have in your cafe and generate printable QR codes for each table.</p>
 
       <div class="form-grid">
-        <div class="form-group">
+        <div class="form-group" style="grid-column:1/-1;">
           <label>Menu Base Web Address (URL)</label>
           <input id="qrBaseUrl" placeholder="http://localhost:8080 or https://your-site.netlify.app">
           <span style="font-size:12px;color:var(--cream-dim);">Leave default for local testing or paste your hosted site URL.</span>
         </div>
 
         <div class="form-group">
-          <label>Total Number of Tables</label>
-          <input type="number" id="qrTableCount" min="1" max="100" value="10">
+          <label>Start Table Number</label>
+          <input type="number" id="qrStartTable" min="1" max="500" value="1">
+          <span style="font-size:12px;color:var(--cream-dim);">First table (e.g. 1 or 11 for continuation).</span>
+        </div>
+
+        <div class="form-group">
+          <label>End Table Number</label>
+          <input type="number" id="qrEndTable" min="1" max="500" value="10">
+          <span style="font-size:12px;color:var(--cream-dim);">Last table (e.g. 10 or 20).</span>
         </div>
       </div>
 
-      <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;">
-        <button class="btn primary" onclick="genAdminTableQRs()">Generate Table QRs</button>
-        <button class="btn secondary" id="printQrBtn" onclick="window.print()">🖨️ Print All Table QRs</button>
+      <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+        <button class="btn primary" onclick="genAdminTableQRs(false)">🔄 Generate Table Range QRs</button>
+        <button class="btn secondary" onclick="genAdminTableQRs(true)">➕ Append Continuation QRs</button>
+        <button class="btn secondary" id="printQrBtn" onclick="window.print()">🖨️ Print Table QRs</button>
       </div>
 
-      <div class="table-qr-grid" id="qrPrintSection"></div>
+      <div class="table-qr-grid" id="qrPrintSection" style="margin-top:20px;"></div>
     </div>
   </section>
 
@@ -1337,9 +1345,11 @@ function saveSupabaseSettings(){
 }
 
 window.onload = function(){
-  const count = parseInt(localStorage.getItem('isha_cafe_table_count')) || 10;
-  document.getElementById('qrTableCount').value = count;
-  genAdminTableQRs();
+  const startNo = parseInt(localStorage.getItem('isha_cafe_qr_start')) || 1;
+  const endNo = parseInt(localStorage.getItem('isha_cafe_qr_end')) || 10;
+  if(document.getElementById('qrStartTable')) document.getElementById('qrStartTable').value = startNo;
+  if(document.getElementById('qrEndTable')) document.getElementById('qrEndTable').value = endNo;
+  genAdminTableQRs(false);
   loadSupabaseSettings();
 };
 
@@ -1355,8 +1365,10 @@ function saveGSTSettings(){
 function saveAllSettings(){
   localStorage.setItem('isha_cafe_menu', JSON.stringify(currentMenu));
   saveGSTSettings();
-  const tableCount = document.getElementById('qrTableCount').value;
-  localStorage.setItem('isha_cafe_table_count', tableCount);
+  const startNo = document.getElementById('qrStartTable') ? document.getElementById('qrStartTable').value : 1;
+  const endNo = document.getElementById('qrEndTable') ? document.getElementById('qrEndTable').value : 10;
+  localStorage.setItem('isha_cafe_qr_start', startNo);
+  localStorage.setItem('isha_cafe_qr_end', endNo);
   showToast('All settings & prices saved successfully!');
 }
 
@@ -1368,17 +1380,31 @@ function switchSection(secId, btn){
   document.getElementById(secId).classList.add('active');
 }
 
-/* TABLE QR CODES */
-function genAdminTableQRs(){
+/* TABLE QR CODES WITH CONTINUATION RANGE & APPEND SUPPORT */
+function genAdminTableQRs(isAppend = false){
   let base = document.getElementById('qrBaseUrl').value.trim();
   if(!base){
     base = window.location.href.startsWith('http') ? window.location.href.replace('admin.html', 'menu.html').split('?')[0] : 'http://localhost:8080/menu.html';
   }
   base = base.split('?')[0];
-  const count = Math.max(1, Math.min(100, parseInt(document.getElementById('qrTableCount').value)||10));
+
+  let startNo = parseInt(document.getElementById('qrStartTable').value) || 1;
+  let endNo = parseInt(document.getElementById('qrEndTable').value) || 10;
+
+  if (startNo < 1) startNo = 1;
+  if (endNo < startNo) endNo = startNo;
+  if (endNo > 500) endNo = 500;
+
   const grid = document.getElementById('qrPrintSection');
-  grid.innerHTML = '';
-  for(let t=1; t<=count; t++){
+  if(!grid) return;
+
+  if(!isAppend) {
+    grid.innerHTML = '';
+  }
+
+  const generatedCount = (endNo - startNo) + 1;
+
+  for(let t = startNo; t <= endNo; t++){
     const tableUrl = `${base}?table=${t}`;
     const encoded = encodeURIComponent(tableUrl);
     const card = document.createElement('div');
@@ -1386,13 +1412,17 @@ function genAdminTableQRs(){
     card.innerHTML = `
       <img src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=6&data=${encoded}" alt="Table ${t} QR">
       <div class="t-label">TABLE ${t}</div>
-      <div class="t-sub">Isha Cafe</div>`;
+      <div class="t-sub">Isha Cafe &middot; Scan for Menu & Order</div>`;
     grid.appendChild(card);
   }
-  showToast(`Generated ${count} Table QRs!`);
+
+  localStorage.setItem('isha_cafe_qr_start', startNo);
+  localStorage.setItem('isha_cafe_qr_end', endNo);
+
+  showToast(`${isAppend ? 'Appended' : 'Generated'} ${generatedCount} Table QRs (Table ${startNo} to ${endNo})!`);
 }
 document.getElementById('qrBaseUrl').value = window.location.href.startsWith('http') ? window.location.href.replace('admin.html', 'menu.html').split('?')[0] : 'http://localhost:8080/menu.html';
-genAdminTableQRs();
+genAdminTableQRs(false);
 
 function showToast(msg) {
   const toast = document.getElementById('toastMsg');
