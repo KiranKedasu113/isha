@@ -1438,7 +1438,7 @@ function changeQty(id, delta){
   renderCart();
 }
 function removeItem(id){ delete cart[id]; renderCart(); }
-function clearCart(){ cart={}; renderCart(); showToast('Order cleared'); }
+function clearCart(){ cart={}; renderCart(); if(typeof refreshPosNextTokenBadge === 'function') refreshPosNextTokenBadge(); showToast('Order cleared'); }
 
 function showToast(msg) {
   const toast = document.getElementById('toastMsg');
@@ -1604,6 +1604,44 @@ async function fetchGlobalNextToken(){
   return nextToken;
 }
 
+async function peekGlobalCurrentToken(){
+  const sbUrl = getSupabaseUrl();
+  const sbKey = getSupabaseKey();
+
+  if(sbUrl && sbKey){
+    try {
+      const cleanUrl = sbUrl.replace(/\/$/, '');
+      const res = await fetch(`${cleanUrl}/rest/v1/token_counter?id=eq.1&select=last_token`, {
+        headers: {
+          'apikey': sbKey,
+          'Authorization': `Bearer ${sbKey}`
+        }
+      });
+      if(res.ok){
+        const rows = await res.json();
+        if(Array.isArray(rows) && rows.length > 0 && rows[0].last_token){
+          const currentCloud = parseInt(rows[0].last_token);
+          localStorage.setItem('isha_cafe_last_token', currentCloud);
+          return currentCloud;
+        }
+      }
+    } catch(e){}
+  }
+  return parseInt(localStorage.getItem('isha_cafe_last_token')) || 100;
+}
+
+async function refreshPosNextTokenBadge(){
+  const currentToken = await peekGlobalCurrentToken();
+  const nextToken = currentToken + 1;
+  const badge = document.getElementById('posTokenNum');
+  if(badge) badge.textContent = nextToken;
+}
+
+(async function initPosToken(){
+  await refreshPosNextTokenBadge();
+  setInterval(refreshPosNextTokenBadge, 5000);
+})();
+
 function triggerSequentialAutoPrint(onComplete){
   const taxBillSec = document.getElementById('taxBillSection');
   const chefSec = document.getElementById('customerTokenSection');
@@ -1728,12 +1766,6 @@ function printBill(tokenOnly = false){
   placeCashierOrder(true);
 }
 
-(function initPosToken(){
-  const lastToken = parseInt(localStorage.getItem('isha_cafe_last_token')) || 100;
-  const badge = document.getElementById('posTokenNum');
-  if(badge) badge.textContent = lastToken + 1;
-})();
-
 /* ---------------- LIVE CROSS-DEVICE CUSTOMER ORDER LISTENER ---------------- */
 let pendingNotificationOrder = null;
 
@@ -1803,6 +1835,8 @@ function processReceivedOrder(orderData, isInitialPoll = false){
     playOrderChimeSound();
     showCustomerOrderNotification(orderData);
   }
+
+  if(typeof refreshPosNextTokenBadge === 'function') refreshPosNextTokenBadge();
 }
 
 let isFirstPollCompleted = false;
