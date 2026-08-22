@@ -916,6 +916,21 @@ function getDishImage(dishName, catName, customImg) {
 
 function applyFreshAdminMenu(freshList) {
   if (Array.isArray(freshList) && freshList.length > 0) {
+    // 1. Prevent wiping table DOM while user is actively typing in an input field
+    const activeEl = document.activeElement;
+    const isEditingInTable = activeEl && (
+      activeEl.classList.contains('name-input') || 
+      activeEl.classList.contains('price-input') || 
+      activeEl.classList.contains('img-input') || 
+      activeEl.classList.contains('cat-select') ||
+      activeEl.id === 'newItemName' ||
+      activeEl.id === 'newItemPrice'
+    );
+    if (isEditingInTable) return;
+
+    // 2. Prevent unnecessary DOM re-renders if menu data is identical
+    if (JSON.stringify(currentMenu) === JSON.stringify(freshList)) return;
+
     currentMenu = freshList;
     currentMenu.forEach((m, i) => {
       m.id = i;

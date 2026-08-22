@@ -1199,6 +1199,8 @@ function getPosCats() {
 
 function applyFreshMenu(freshList) {
   if (Array.isArray(freshList) && freshList.length > 0) {
+    if (JSON.stringify(MENU) === JSON.stringify(freshList)) return;
+
     MENU.length = 0;
     freshList.forEach((m, i) => {
       m.id = i;

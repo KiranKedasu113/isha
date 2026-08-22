@@ -945,7 +945,10 @@ function getMobCats() {
 
 function applyFreshMobMenu(freshList) {
   if (Array.isArray(freshList) && freshList.length > 0) {
-    MENU = freshList.filter(m => m.c !== 'Irani');
+    const cleanFresh = freshList.filter(m => m.c !== 'Irani');
+    if (JSON.stringify(MENU) === JSON.stringify(cleanFresh)) return;
+
+    MENU = cleanFresh;
     MENU.forEach((m, i) => {
       m.id = i;
       m.code = (m.code !== undefined && m.code !== null && m.code !== '') ? m.code : (i + 1);
